@@ -1,0 +1,26 @@
+[package]
+name = "debot-db"
+version = "0.1.0"
+authors = ["Shigeo NAKAMURA <nakamura_shigeo@yahoo.com>"]
+edition = "2021"
+description = "Utility functions for DB access"
+documentation = "https://docs.rs/debot-utils/"
+homepage = "https://crates.io/crates/debot-db"
+repository = "https://github.com/shigeo-nakamura/debot-db"
+license = "MIT"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde_json = "1.0"
+async-trait = "0.1.68"
+serde = { version = "1.0", features = ["derive"] }
+futures = "0.3.28"
+bson = "2.0.0"
+env_logger = "0.10.0"
+log = "0.4.17"
+shared_mongodb = "0.1.7"
+
+[dependencies.mongodb]
+version = "2.2.1"
+default-features = false
+features = ["async-std-runtime"]
