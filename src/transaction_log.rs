@@ -1,11 +1,5 @@
 // transaction_log.rs
 
-use crate::db::{
-    insert_item,
-    item::{search_items, update_item},
-    Entity,
-};
-use crate::db::{search_item, Counter, CounterType};
 use debot_market_analyzer::PricePoint;
 use debot_position_manager::{State, TradePosition};
 use debot_utils::HasId;
@@ -16,6 +10,8 @@ use std::collections::HashMap;
 use std::error;
 use std::sync::Arc;
 use std::time::SystemTime;
+
+use crate::{insert_item, search_item, search_items, update_item, Counter, CounterType, Entity};
 
 async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
     let item = T::default();

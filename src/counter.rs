@@ -5,6 +5,7 @@ pub enum CounterType {
     Price,
     Pnl,
 }
+
 pub struct CounterData {
     max: u32,
     counter: std::sync::Mutex<u32>,
