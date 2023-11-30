@@ -83,9 +83,9 @@ pub struct TransactionLog {
 
 impl TransactionLog {
     pub async fn new(
-        position_counter: u32,
-        price_counter: u32,
-        balance_counter: u32,
+        max_position_counter: u32,
+        max_price_counter: u32,
+        max_pnl_counter: u32,
         mongodb_uri: &str,
         db_name: &str,
     ) -> Self {
@@ -115,12 +115,12 @@ impl TransactionLog {
         let last_pnl_counter = TransactionLog::get_last_transaction_id(&db, CounterType::Pnl).await;
 
         let counter = Counter::new(
+            max_position_counter,
+            max_price_counter,
+            max_pnl_counter,
             last_position_counter,
             last_price_counter,
             last_pnl_counter,
-            position_counter,
-            price_counter,
-            balance_counter,
         );
 
         TransactionLog {
