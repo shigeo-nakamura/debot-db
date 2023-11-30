@@ -3,15 +3,22 @@
 use debot_market_analyzer::PricePoint;
 use debot_position_manager::{State, TradePosition};
 use debot_utils::HasId;
-use mongodb::Database;
+use mongodb::{
+    options::{ClientOptions, Tls, TlsOptions},
+    Database,
+};
 use serde::{Deserialize, Serialize};
 use shared_mongodb::{database, ClientHolder};
 use std::collections::HashMap;
 use std::error;
 use std::sync::Arc;
 use std::time::SystemTime;
+use tokio::sync::Mutex;
 
-use crate::{insert_item, search_item, search_items, update_item, Counter, CounterType, Entity};
+use crate::{
+    create_unique_index, insert_item, search_item, search_items, update_item, Counter, CounterType,
+    Entity,
+};
 
 async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
     let item = T::default();
@@ -71,22 +78,46 @@ impl HasId for PriceLog {
 pub struct TransactionLog {
     counter: Counter,
     db_name: String,
+    client_holder: Arc<Mutex<ClientHolder>>,
 }
 
 impl TransactionLog {
-    pub fn new(
-        max_position_counter: u32,
-        max_price_couner: u32,
-        max_pnl_counter: u32,
+    pub async fn new(
         position_counter: u32,
         price_counter: u32,
         balance_counter: u32,
+        mongodb_uri: &str,
         db_name: &str,
     ) -> Self {
+        // Set up the DB client holder
+        let mut client_options = match ClientOptions::parse(mongodb_uri).await {
+            Ok(client_options) => client_options,
+            Err(e) => {
+                panic!("{:?}", e);
+            }
+        };
+        let tls_options = TlsOptions::builder().build();
+        client_options.tls = Some(Tls::Enabled(tls_options));
+        let client_holder = Arc::new(Mutex::new(ClientHolder::new(client_options)));
+
+        let db = shared_mongodb::database::get(&client_holder, &db_name)
+            .await
+            .unwrap();
+
+        create_unique_index(&db)
+            .await
+            .expect("Error creating unique index");
+
+        let last_position_counter =
+            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await;
+        let last_price_counter =
+            TransactionLog::get_last_transaction_id(&db, CounterType::Price).await;
+        let last_pnl_counter = TransactionLog::get_last_transaction_id(&db, CounterType::Pnl).await;
+
         let counter = Counter::new(
-            max_position_counter,
-            max_price_couner,
-            max_pnl_counter,
+            last_position_counter,
+            last_price_counter,
+            last_pnl_counter,
             position_counter,
             price_counter,
             balance_counter,
@@ -95,6 +126,7 @@ impl TransactionLog {
         TransactionLog {
             counter,
             db_name: db_name.to_owned(),
+            client_holder,
         }
     }
 
@@ -110,15 +142,8 @@ impl TransactionLog {
         }
     }
 
-    pub fn db_name(&self) -> &str {
-        &self.db_name
-    }
-
-    pub async fn get_db(
-        &self,
-        db_client: &Arc<tokio::sync::Mutex<ClientHolder>>,
-    ) -> Option<Database> {
-        let db = match database::get(db_client, self.db_name()).await {
+    pub async fn get_db(&self) -> Option<Database> {
+        let db = match database::get(&self.client_holder, &self.db_name).await {
             Ok(db) => Some(db),
             Err(e) => {
                 log::error!("get_db: {:?}", e);
