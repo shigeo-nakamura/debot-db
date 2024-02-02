@@ -160,7 +160,7 @@ impl TransactionLog {
         let items = match search_items(db, &item).await {
             Ok(items) => items
                 .into_iter()
-                .filter(|position| *position.state() == State::Open)
+                .filter(|position| position.state() == State::Open)
                 .collect(),
             Err(_) => {
                 vec![]
