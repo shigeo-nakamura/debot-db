@@ -51,7 +51,7 @@ impl Counter {
 
         let mut counter = counter_data.counter.lock().unwrap();
         *counter += 1;
-        let mut id = *counter % (counter_data.max + 1);
+        let mut id = *counter % counter_data.max;
         if id == 0 {
             id = 1;
         }
