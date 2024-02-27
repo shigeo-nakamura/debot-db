@@ -37,6 +37,7 @@ pub struct AppState {
     pub last_execution_time: Option<SystemTime>,
     pub last_equity: Option<f64>,
     pub curcuit_break: bool,
+    pub error_time: Vec<String>,
 }
 
 impl Default for AppState {
@@ -46,6 +47,7 @@ impl Default for AppState {
             last_execution_time: None,
             last_equity: None,
             curcuit_break: false,
+            error_time: vec![],
         }
     }
 }
@@ -236,6 +238,7 @@ impl TransactionLog {
         last_execution_time: Option<SystemTime>,
         last_equity: Option<f64>,
         curcuit_break: bool,
+        error_time: Option<String>,
     ) -> Result<(), Box<dyn error::Error>> {
         let item = AppState::default();
         let mut item = match search_item(db, &item).await {
@@ -249,6 +252,10 @@ impl TransactionLog {
 
         if last_equity.is_some() {
             item.last_equity = last_equity;
+        }
+
+        if let Some(error_time) = error_time {
+            item.error_time.push(error_time);
         }
 
         item.curcuit_break = curcuit_break;
