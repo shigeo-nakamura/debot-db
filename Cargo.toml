@@ -1,6 +1,6 @@
 [package]
 name = "debot-db"
-version = "1.2.4"
+version = "1.2.5"
 authors = ["Shigeo NAKAMURA <nakamura_shigeo@yahoo.com>"]
 edition = "2021"
 description = "DB accesser"
@@ -19,6 +19,7 @@ bson = "2.0.0"
 env_logger = "0.10.0"
 log = "0.4.17"
 shared_mongodb = "0.1.7"
+rust_decimal = { version = "1.0", features = ["serde"] }
 
 debot-market-analyzer = "1.1.*"
 debot-position-manager = "1.2.*"

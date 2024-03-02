@@ -7,6 +7,7 @@ use mongodb::{
     options::{ClientOptions, Tls, TlsOptions},
     Database,
 };
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use shared_mongodb::{database, ClientHolder};
 use std::collections::HashMap;
@@ -35,7 +36,7 @@ async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
 pub struct AppState {
     pub id: u32,
     pub last_execution_time: Option<SystemTime>,
-    pub last_equity: Option<f64>,
+    pub last_equity: Option<Decimal>,
     pub curcuit_break: bool,
     pub error_time: Vec<String>,
 }
@@ -56,7 +57,7 @@ impl Default for AppState {
 pub struct PnlLog {
     pub id: Option<u32>,
     pub date: String,
-    pub pnl: f64,
+    pub pnl: Decimal,
 }
 
 impl HasId for PnlLog {
@@ -236,7 +237,7 @@ impl TransactionLog {
     pub async fn update_app_state(
         db: &Database,
         last_execution_time: Option<SystemTime>,
-        last_equity: Option<f64>,
+        last_equity: Option<Decimal>,
         curcuit_break: bool,
         error_time: Option<String>,
     ) -> Result<(), Box<dyn error::Error>> {
