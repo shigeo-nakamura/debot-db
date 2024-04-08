@@ -1,13 +1,15 @@
 // transaction_log.rs
 
-use debot_market_analyzer::PricePoint;
 use debot_position_manager::{State, TradePosition};
 use debot_utils::HasId;
+use debot_utils::ToDateTimeString;
+use mongodb::bson::Decimal128;
 use mongodb::{
     options::{ClientOptions, Tls, TlsOptions},
     Database,
 };
 use rust_decimal::Decimal;
+use serde::Serializer;
 use serde::{Deserialize, Serialize};
 use shared_mongodb::{database, ClientHolder};
 use std::collections::HashMap;
@@ -63,6 +65,33 @@ pub struct PnlLog {
 impl HasId for PnlLog {
     fn id(&self) -> Option<u32> {
         self.id
+    }
+}
+
+fn serialize_decimal<S>(value: &Decimal, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let dec128 = value.to_string().parse::<Decimal128>().unwrap();
+    dec128.serialize(serializer)
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct PricePoint {
+    pub timestamp: i64,
+    pub timestamp_str: String,
+    #[serde(serialize_with = "serialize_decimal")]
+    pub price: Decimal,
+}
+
+impl PricePoint {
+    pub fn new(price: Decimal, timestamp: Option<i64>) -> Self {
+        let time = timestamp.unwrap_or_else(|| chrono::Utc::now().timestamp());
+        Self {
+            timestamp: time,
+            timestamp_str: time.to_datetime_string(),
+            price,
+        }
     }
 }
 
