@@ -68,19 +68,10 @@ impl HasId for PnlLog {
     }
 }
 
-fn serialize_decimal<S>(value: &Decimal, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let dec128 = value.to_string().parse::<Decimal128>().unwrap();
-    dec128.serialize(serializer)
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct PricePoint {
     pub timestamp: i64,
     pub timestamp_str: String,
-    #[serde(serialize_with = "serialize_decimal")]
     pub price: Decimal,
 }
 
