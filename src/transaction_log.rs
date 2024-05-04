@@ -3,13 +3,11 @@
 use debot_position_manager::{State, TradePosition};
 use debot_utils::HasId;
 use debot_utils::ToDateTimeString;
-use mongodb::bson::Decimal128;
 use mongodb::{
     options::{ClientOptions, Tls, TlsOptions},
     Database,
 };
 use rust_decimal::Decimal;
-use serde::Serializer;
 use serde::{Deserialize, Serialize};
 use shared_mongodb::{database, ClientHolder};
 use std::collections::HashMap;
@@ -51,6 +49,28 @@ impl Default for AppState {
             last_equity: None,
             curcuit_break: false,
             error_time: vec![],
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Score {
+    pub token_name: String,
+    pub atr_ratio: Decimal,
+    pub score: i32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ScoreMap {
+    pub id: u32,
+    pub scores: Vec<Score>,
+}
+
+impl Default for ScoreMap {
+    fn default() -> Self {
+        Self {
+            id: 1,
+            scores: vec![],
         }
     }
 }
@@ -240,6 +260,25 @@ impl TransactionLog {
 
     pub async fn insert_pnl(db: &Database, item: PnlLog) -> Result<(), Box<dyn error::Error>> {
         insert_item(db, &item).await?;
+        Ok(())
+    }
+
+    pub async fn get_score_map(db: &Database) -> ScoreMap {
+        let item = ScoreMap::default();
+        match search_item(db, &item).await {
+            Ok(item) => item,
+            Err(e) => {
+                log::warn!("get_score_map: {:?}", e);
+                item
+            }
+        }
+    }
+
+    pub async fn update_score_map(
+        db: &Database,
+        item: ScoreMap,
+    ) -> Result<(), Box<dyn error::Error>> {
+        update_item(db, &item).await?;
         Ok(())
     }
 

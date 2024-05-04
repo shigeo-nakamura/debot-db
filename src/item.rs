@@ -11,6 +11,8 @@ use serde::Serialize;
 use std::error;
 use std::io::{Error, ErrorKind};
 
+use crate::ScoreMap;
+
 use super::AppState;
 use super::PnlLog;
 use super::PriceLog;
@@ -209,6 +211,39 @@ impl Entity for AppState {
 
     fn get_collection_name(&self) -> &str {
         "app-state"
+    }
+}
+
+#[async_trait]
+impl Entity for ScoreMap {
+    async fn insert(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
+        panic!("Not implemented")
+    }
+
+    async fn update(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let query = doc! { "id": 1 };
+        let update = bson::to_bson(self).unwrap();
+        let update = doc! { "$set" : update };
+        let collection = self.get_collection(db);
+        collection.update(query, update, true).await
+    }
+
+    async fn delete(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
+        panic!("Not implemented")
+    }
+
+    async fn delete_all(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
+        panic!("Not implemented")
+    }
+
+    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
+        let query = doc! { "id": 1 };
+        let collection = self.get_collection(db);
+        collection.search(query).await
+    }
+
+    fn get_collection_name(&self) -> &str {
+        "score-map"
     }
 }
 
