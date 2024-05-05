@@ -57,7 +57,13 @@ impl Default for AppState {
 pub struct Score {
     pub token_name: String,
     pub atr_ratio: Decimal,
-    pub score: i32,
+    pub val: i32,
+}
+
+impl PartialEq for Score {
+    fn eq(&self, other: &Self) -> bool {
+        self.token_name == other.token_name && self.atr_ratio == other.atr_ratio
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -276,8 +282,18 @@ impl TransactionLog {
 
     pub async fn update_score_map(
         db: &Database,
-        item: ScoreMap,
+        mut item: ScoreMap,
     ) -> Result<(), Box<dyn error::Error>> {
+        if let Ok(mut master) = search_item(db, &ScoreMap::default()).await {
+            for new_score in &item.scores {
+                if let Some(cur_score) = master.scores.iter_mut().find(|s| *s == new_score) {
+                    cur_score.val = (cur_score.val + new_score.val) / 2;
+                } else {
+                    master.scores.push(new_score.clone());
+                }
+            }
+            item = master;
+        }
         update_item(db, &item).await?;
         Ok(())
     }
