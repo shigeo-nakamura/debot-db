@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use bson::Document;
-use debot_position_manager::TradePosition;
+use debot_utils::HasId;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::*;
@@ -11,7 +11,7 @@ use serde::Serialize;
 use std::error;
 use std::io::{Error, ErrorKind};
 
-use crate::ScoreMap;
+use crate::PositionLog;
 
 use super::AppState;
 use super::PnlLog;
@@ -94,7 +94,7 @@ pub async fn search_item<T: Entity>(db: &Database, item: &T) -> Result<T, Box<dy
 }
 
 pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Error>> {
-    let item = TradePosition::default();
+    let item = PositionLog::default();
     item.create_unique_index(db).await?;
 
     let item = AppState::default();
@@ -110,7 +110,7 @@ pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Err
 }
 
 #[async_trait]
-impl Entity for TradePosition {
+impl Entity for PositionLog {
     async fn insert(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
         let collection = self.get_collection(db);
         collection.insert_one(self, None).await?;
@@ -211,39 +211,6 @@ impl Entity for AppState {
 
     fn get_collection_name(&self) -> &str {
         "app-state"
-    }
-}
-
-#[async_trait]
-impl Entity for ScoreMap {
-    async fn insert(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
-        panic!("Not implemented")
-    }
-
-    async fn update(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
-        let query = doc! { "id": 1 };
-        let update = bson::to_bson(self).unwrap();
-        let update = doc! { "$set" : update };
-        let collection = self.get_collection(db);
-        collection.update(query, update, true).await
-    }
-
-    async fn delete(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
-        panic!("Not implemented")
-    }
-
-    async fn delete_all(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
-        panic!("Not implemented")
-    }
-
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
-        let query = doc! { "id": 1 };
-        let collection = self.get_collection(db);
-        collection.search(query).await
-    }
-
-    fn get_collection_name(&self) -> &str {
-        "score-map"
     }
 }
 

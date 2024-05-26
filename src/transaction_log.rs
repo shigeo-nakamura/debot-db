@@ -1,8 +1,11 @@
 // transaction_log.rs
 
-use debot_position_manager::{State, TradePosition};
+use bson::doc;
+use bson::Bson;
+use bson::Document;
 use debot_utils::HasId;
 use debot_utils::ToDateTimeString;
+use mongodb::Collection;
 use mongodb::{
     options::{ClientOptions, Tls, TlsOptions},
     Database,
@@ -53,34 +56,6 @@ impl Default for AppState {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Score {
-    pub token_name: String,
-    pub atr_ratio: Decimal,
-    pub val: i32,
-}
-
-impl PartialEq for Score {
-    fn eq(&self, other: &Self) -> bool {
-        self.token_name == other.token_name && self.atr_ratio == other.atr_ratio
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ScoreMap {
-    pub id: u32,
-    pub scores: Vec<Score>,
-}
-
-impl Default for ScoreMap {
-    fn default() -> Self {
-        Self {
-            id: 1,
-            scores: vec![],
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct PnlLog {
     pub id: Option<u32>,
@@ -121,6 +96,52 @@ pub struct PriceLog {
 }
 
 impl HasId for PriceLog {
+    fn id(&self) -> Option<u32> {
+        self.id
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct DebugLog {
+    pub input_1: Decimal,
+    pub input_2: Decimal,
+    pub input_3: Decimal,
+    pub input_4: Decimal,
+    pub input_5: Decimal,
+    pub input_6: Decimal,
+    pub input_7: Decimal,
+    pub input_8: Decimal,
+    pub input_9: Decimal,
+    pub input_10: Decimal,
+    pub output_1: Decimal,
+    pub output_2: Decimal,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct PositionLog {
+    pub id: Option<u32>,
+    pub fund_name: String,
+    pub order_id: String,
+    pub ordered_price: Decimal,
+    pub state: String,
+    pub token_name: String,
+    pub open_time_str: String,
+    pub close_time_str: String,
+    pub average_open_price: Decimal,
+    pub position_type: String,
+    pub close_price: Decimal,
+    pub asset_in_usd: Decimal,
+    pub pnl: Decimal,
+    pub fee: Decimal,
+    pub debug: DebugLog,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SerializableModel {
+    pub model: Vec<u8>,
+}
+
+impl HasId for PositionLog {
     fn id(&self) -> Option<u32> {
         self.id
     }
@@ -187,7 +208,7 @@ impl TransactionLog {
 
     pub async fn get_last_transaction_id(db: &Database, counter_type: CounterType) -> u32 {
         match counter_type {
-            CounterType::Position => get_last_id::<TradePosition>(db).await,
+            CounterType::Position => get_last_id::<PositionLog>(db).await,
             CounterType::Price => get_last_id::<PriceLog>(db).await,
             CounterType::Pnl => get_last_id::<PnlLog>(db).await,
         }
@@ -204,24 +225,9 @@ impl TransactionLog {
         db
     }
 
-    pub async fn get_all_open_positions(db: &Database) -> Vec<TradePosition> {
-        let item = TradePosition::default();
-        let items = match search_items(db, &item).await {
-            Ok(items) => items
-                .into_iter()
-                .filter(|position| position.state() == State::Open)
-                .collect(),
-            Err(_) => {
-                vec![]
-            }
-        };
-        log::trace!("get_all_open_position: {:?}", items);
-        items
-    }
-
     pub async fn update_transaction(
         db: &Database,
-        item: &TradePosition,
+        item: &PositionLog,
     ) -> Result<(), Box<dyn error::Error>> {
         update_item(db, item).await?;
         Ok(())
@@ -264,37 +270,20 @@ impl TransactionLog {
         result
     }
 
+    pub async fn get_all_open_positions(db: &Database) -> Vec<PositionLog> {
+        let item = PositionLog::default();
+        let items = match search_items(db, &item).await {
+            Ok(items) => items.into_iter().collect(),
+            Err(_) => {
+                vec![]
+            }
+        };
+        log::trace!("get_all_open_position: {:?}", items);
+        items
+    }
+
     pub async fn insert_pnl(db: &Database, item: PnlLog) -> Result<(), Box<dyn error::Error>> {
         insert_item(db, &item).await?;
-        Ok(())
-    }
-
-    pub async fn get_score_map(db: &Database) -> ScoreMap {
-        let item = ScoreMap::default();
-        match search_item(db, &item).await {
-            Ok(item) => item,
-            Err(e) => {
-                log::warn!("get_score_map: {:?}", e);
-                item
-            }
-        }
-    }
-
-    pub async fn update_score_map(
-        db: &Database,
-        mut item: ScoreMap,
-    ) -> Result<(), Box<dyn error::Error>> {
-        if let Ok(mut master) = search_item(db, &ScoreMap::default()).await {
-            for new_score in &item.scores {
-                if let Some(cur_score) = master.scores.iter_mut().find(|s| *s == new_score) {
-                    cur_score.val = (cur_score.val + new_score.val) / 2;
-                } else {
-                    master.scores.push(new_score.clone());
-                }
-            }
-            item = master;
-        }
-        update_item(db, &item).await?;
         Ok(())
     }
 
@@ -338,5 +327,93 @@ impl TransactionLog {
 
         update_item(db, &item).await?;
         Ok(())
+    }
+}
+
+pub struct ModelParams {
+    db_name: String,
+    client_holder: Arc<Mutex<ClientHolder>>,
+    collection_name: String,
+}
+
+impl ModelParams {
+    pub async fn new(mongodb_uri: &str, db_name: &str) -> Self {
+        // Set up the DB client holder
+        let mut client_options = match ClientOptions::parse(mongodb_uri).await {
+            Ok(client_options) => client_options,
+            Err(e) => {
+                panic!("{:?}", e);
+            }
+        };
+        let tls_options = TlsOptions::builder().build();
+        client_options.tls = Some(Tls::Enabled(tls_options));
+        let client_holder = Arc::new(Mutex::new(ClientHolder::new(client_options)));
+
+        ModelParams {
+            db_name: db_name.to_owned(),
+            client_holder,
+            collection_name: "model_params".to_owned(),
+        }
+    }
+
+    async fn get_db(&self) -> Option<Database> {
+        let db = match database::get(&self.client_holder, &self.db_name).await {
+            Ok(db) => Some(db),
+            Err(e) => {
+                log::error!("get_db: {:?}", e);
+                None
+            }
+        };
+        db
+    }
+
+    pub async fn save_model(
+        &self,
+        key: &str,
+        model: &SerializableModel,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let db = self.get_db().await.ok_or("no db")?;
+        let collection: Collection<Document> = db.collection(&self.collection_name);
+        let serialized_model = bincode::serialize(model)?;
+
+        let document = doc! {
+            "key": key,
+            "model": Bson::Binary(mongodb::bson::Binary {
+                subtype: mongodb::bson::spec::BinarySubtype::Generic,
+                bytes: serialized_model
+            })
+        };
+
+        collection
+            .update_one(
+                doc! { "key": key },
+                doc! { "$set": document },
+                mongodb::options::UpdateOptions::builder()
+                    .upsert(true)
+                    .build(),
+            )
+            .await?;
+        Ok(())
+    }
+
+    pub async fn load_model(
+        &self,
+        key: &str,
+    ) -> Result<SerializableModel, Box<dyn std::error::Error>> {
+        let db = self.get_db().await.ok_or("no db")?;
+        let collection: Collection<Document> = db.collection(&self.collection_name);
+
+        let filter = doc! { "key": key };
+        let document = collection
+            .find_one(filter, None)
+            .await?
+            .ok_or("No model found in the collection")?;
+
+        if let Some(Bson::Binary(model_bytes)) = document.get("model") {
+            let model: SerializableModel = bincode::deserialize(&model_bytes.bytes)?;
+            Ok(model)
+        } else {
+            Err("Invalid data format".into())
+        }
     }
 }
