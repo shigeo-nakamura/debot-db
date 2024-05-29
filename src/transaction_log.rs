@@ -330,6 +330,7 @@ impl TransactionLog {
     }
 }
 
+#[derive(Clone)]
 pub struct ModelParams {
     db_name: String,
     client_holder: Arc<Mutex<ClientHolder>>,
