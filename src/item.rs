@@ -300,7 +300,10 @@ where
     }
 
     async fn search(&self, query: Document) -> Result<Vec<T>, Box<dyn error::Error>> {
-        let find_options = FindOptions::builder().allow_disk_use(true).build();
+        let find_options = FindOptions::builder()
+            .allow_disk_use(true)
+            .sort(doc! { "id": 1 })
+            .build();
         let mut items: Vec<T> = vec![];
         let mut cursor = self.find(query, find_options).await?;
         while let Some(item) = cursor.try_next().await? {
