@@ -179,7 +179,8 @@ impl HasId for PositionLog {
 
 pub struct TransactionLog {
     counter: Counter,
-    db_name: String,
+    db_r_name: String,
+    db_w_name: String,
     client_holder: Arc<Mutex<ClientHolder>>,
 }
 
@@ -189,7 +190,8 @@ impl TransactionLog {
         max_price_counter: u32,
         max_pnl_counter: u32,
         mongodb_uri: &str,
-        db_name: &str,
+        db_r_name: &str,
+        db_w_name: &str,
     ) -> Self {
         // Set up the DB client holder
         let mut client_options = match ClientOptions::parse(mongodb_uri).await {
@@ -202,7 +204,7 @@ impl TransactionLog {
         client_options.tls = Some(Tls::Enabled(tls_options));
         let client_holder = Arc::new(Mutex::new(ClientHolder::new(client_options)));
 
-        let db = shared_mongodb::database::get(&client_holder, &db_name)
+        let db = shared_mongodb::database::get(&client_holder, &db_w_name)
             .await
             .unwrap();
 
@@ -227,7 +229,8 @@ impl TransactionLog {
 
         TransactionLog {
             counter,
-            db_name: db_name.to_owned(),
+            db_r_name: db_r_name.to_owned(),
+            db_w_name: db_w_name.to_owned(),
             client_holder,
         }
     }
@@ -244,8 +247,21 @@ impl TransactionLog {
         }
     }
 
-    pub async fn get_db(&self) -> Option<Database> {
-        let db = match database::get(&self.client_holder, &self.db_name).await {
+    pub async fn get_w_db(&self) -> Option<Database> {
+        self.get_db(false).await
+    }
+
+    pub async fn get_r_db(&self) -> Option<Database> {
+        self.get_db(true).await
+    }
+
+    async fn get_db(&self, read: bool) -> Option<Database> {
+        let db_name = if read {
+            &self.db_r_name
+        } else {
+            &self.db_w_name
+        };
+        let db = match database::get(&self.client_holder, db_name).await {
             Ok(db) => Some(db),
             Err(e) => {
                 log::error!("get_db: {:?}", e);
