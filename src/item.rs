@@ -17,6 +17,12 @@ use super::AppState;
 use super::PnlLog;
 use super::PriceLog;
 
+pub enum SearchMode {
+    Ascending,
+    Descending,
+    ById,
+}
+
 #[async_trait]
 pub trait Entity {
     async fn insert(&self, db: &Database) -> Result<(), Box<dyn error::Error>>;
@@ -24,7 +30,13 @@ pub trait Entity {
     async fn delete(&self, db: &Database) -> Result<(), Box<dyn error::Error>>;
     async fn delete_all(&self, db: &Database) -> Result<(), Box<dyn error::Error>>;
 
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>>
+    async fn search(
+        &self,
+        db: &Database,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<Self>, Box<dyn error::Error>>
     where
         Self: std::marker::Sized;
 
@@ -77,12 +89,19 @@ pub async fn delete_item_all<T: Entity>(
 pub async fn search_items<T: Entity>(
     db: &Database,
     item: &T,
+    mode: SearchMode,
+    limit: Option<usize>,
+    id: Option<u32>,
 ) -> Result<Vec<T>, Box<dyn error::Error>> {
-    item.search(db).await
+    item.search(db, mode, limit, id).await
 }
 
-pub async fn search_item<T: Entity>(db: &Database, item: &T) -> Result<T, Box<dyn error::Error>> {
-    let mut items = item.search(db).await?;
+pub async fn search_item<T: Entity>(
+    db: &Database,
+    item: &T,
+    id: Option<u32>,
+) -> Result<T, Box<dyn error::Error>> {
+    let mut items = item.search(db, SearchMode::ById, None, id).await?;
     if items.len() == 1 {
         Ok(items.pop().unwrap())
     } else {
@@ -133,13 +152,19 @@ impl Entity for PositionLog {
         panic!("Not implemented")
     }
 
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
+    async fn search(
+        &self,
+        db: &Database,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id() != None {
             query = doc! { "id": self.id().unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query).await
+        collection.search(query, mode, limit, id).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -167,13 +192,19 @@ impl Entity for PnlLog {
         panic!("Not implemented")
     }
 
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
+    async fn search(
+        &self,
+        db: &Database,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id != None {
             query = doc! { "id": self.id.unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query).await
+        collection.search(query, mode, limit, id).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -203,10 +234,16 @@ impl Entity for AppState {
         panic!("Not implemented")
     }
 
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
+    async fn search(
+        &self,
+        db: &Database,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let query = doc! { "id": 1 };
         let collection = self.get_collection(db);
-        collection.search(query).await
+        collection.search(query, mode, limit, id).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -238,13 +275,19 @@ impl Entity for PriceLog {
         panic!("Not implemented")
     }
 
-    async fn search(&self, db: &Database) -> Result<Vec<Self>, Box<dyn error::Error>> {
+    async fn search(
+        &self,
+        db: &Database,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id != None {
             query = doc! { "id": self.id.unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query).await
+        collection.search(query, mode, limit, id).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -262,7 +305,13 @@ pub trait HelperCollection<T> {
     ) -> Result<(), Box<dyn error::Error>>;
     async fn delete(&self, query: Document) -> Result<(), Box<dyn error::Error>>;
     async fn delete_all(&self) -> Result<(), Box<dyn error::Error>>;
-    async fn search(&self, query: Document) -> Result<Vec<T>, Box<dyn error::Error>>;
+    async fn search(
+        &self,
+        query: Document,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<T>, Box<dyn error::Error>>;
 }
 
 #[async_trait]
@@ -299,17 +348,57 @@ where
         Ok(())
     }
 
-    async fn search(&self, query: Document) -> Result<Vec<T>, Box<dyn error::Error>> {
-        let find_options = FindOptions::builder()
-            .allow_disk_use(true)
-            .sort(doc! { "id": 1 })
-            .build();
+    async fn search(
+        &self,
+        mut query: Document,
+        mode: SearchMode,
+        limit: Option<usize>,
+        id: Option<u32>,
+    ) -> Result<Vec<T>, Box<dyn error::Error>> {
         let mut items: Vec<T> = vec![];
+
+        let find_options = match mode {
+            SearchMode::Ascending => {
+                let builder = FindOptions::builder()
+                    .allow_disk_use(true)
+                    .sort(doc! { "id": 1 });
+
+                if let Some(limit_value) = limit {
+                    builder.limit(limit_value as i64).build()
+                } else {
+                    builder.build()
+                }
+            }
+            SearchMode::Descending => {
+                let builder = FindOptions::builder()
+                    .allow_disk_use(true)
+                    .sort(doc! { "id": -1 });
+
+                if let Some(limit_value) = limit {
+                    builder.limit(limit_value as i64).build()
+                } else {
+                    builder.build()
+                }
+            }
+            SearchMode::ById => {
+                if let Some(id_value) = id {
+                    query.insert("id", id_value);
+                } else {
+                    return Err(Box::new(Error::new(
+                        ErrorKind::InvalidInput,
+                        "ID not provided".to_string(),
+                    )));
+                }
+                FindOptions::default()
+            }
+        };
+
         let mut cursor = self.find(query, find_options).await?;
         while let Some(item) = cursor.try_next().await? {
             items.push(item);
         }
-        if items.len() == 0 {
+
+        if items.is_empty() {
             Err(Box::new(Error::new(
                 ErrorKind::Other,
                 "Item not found".to_string(),

@@ -19,6 +19,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::Mutex;
 
+use crate::SearchMode;
 use crate::{
     create_unique_index, insert_item, search_item, search_items, update_item, Counter, CounterType,
     Entity,
@@ -26,7 +27,7 @@ use crate::{
 
 async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
     let item = T::default();
-    match search_items(db, &item).await {
+    match search_items(db, &item, crate::SearchMode::Descending, Some(1), None).await {
         Ok(mut items) => items.pop().and_then(|item| item.id()).unwrap_or(0),
         Err(e) => {
             log::warn!("get_last_id: {:?}", e);
@@ -305,13 +306,37 @@ impl TransactionLog {
 
     pub async fn get_price_market_data(
         db: &Database,
+        limit: Option<usize>,
+        id: Option<u32>,
     ) -> HashMap<String, HashMap<String, Vec<PricePoint>>> {
         let item = PriceLog::default();
-        let items = match search_items(db, &item).await {
-            Ok(items) => items,
-            Err(e) => {
-                log::warn!("get_price_market_data: {:?}", e);
-                return HashMap::new();
+        let items = if id.is_some() {
+            match search_item(db, &item, id).await {
+                Ok(items) => {
+                    let mut item_vec = Vec::new();
+                    item_vec.push(items);
+                    item_vec
+                }
+                Err(e) => {
+                    log::warn!("get_price_market_data: {:?}", e);
+                    return HashMap::new();
+                }
+            }
+        } else if limit.is_some() {
+            match search_items(db, &item, SearchMode::Descending, limit, None).await {
+                Ok(items) => items,
+                Err(e) => {
+                    log::warn!("get_price_market_data: {:?}", e);
+                    return HashMap::new();
+                }
+            }
+        } else {
+            match search_items(db, &item, SearchMode::Ascending, None, None).await {
+                Ok(items) => items,
+                Err(e) => {
+                    log::warn!("get_price_market_data: {:?}", e);
+                    return HashMap::new();
+                }
             }
         };
 
@@ -337,7 +362,7 @@ impl TransactionLog {
 
     pub async fn get_all_open_positions(db: &Database) -> Vec<PositionLog> {
         let item = PositionLog::default();
-        let items = match search_items(db, &item).await {
+        let items = match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
             Ok(items) => items.into_iter().collect(),
             Err(_) => {
                 vec![]
@@ -354,7 +379,7 @@ impl TransactionLog {
 
     pub async fn get_app_state(db: &Database) -> AppState {
         let item = AppState::default();
-        match search_item(db, &item).await {
+        match search_item(db, &item, Some(1)).await {
             Ok(item) => item,
             Err(e) => {
                 log::warn!("get_app_state: {:?}", e);
@@ -371,7 +396,7 @@ impl TransactionLog {
         error_time: Option<String>,
     ) -> Result<(), Box<dyn error::Error>> {
         let item = AppState::default();
-        let mut item = match search_item(db, &item).await {
+        let mut item = match search_item(db, &item, Some(1)).await {
             Ok(prev_item) => prev_item,
             Err(_) => item,
         };
