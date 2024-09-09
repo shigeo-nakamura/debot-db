@@ -30,7 +30,7 @@ async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
     match search_items(db, &item, crate::SearchMode::Descending, Some(1), None).await {
         Ok(mut items) => items.pop().and_then(|item| item.id()).unwrap_or(0),
         Err(e) => {
-            log::warn!("get_last_id: {:?}", e);
+            log::info!("get_last_id: {:?}", e);
             0
         }
     }
@@ -212,6 +212,7 @@ impl TransactionLog {
         mongodb_uri: &str,
         db_r_name: &str,
         db_w_name: &str,
+        back_test: bool,
     ) -> Self {
         // Set up the DB client holder
         let mut client_options = match ClientOptions::parse(mongodb_uri).await {
@@ -232,8 +233,11 @@ impl TransactionLog {
             .await
             .expect("Error creating unique index");
 
-        let last_position_counter =
-            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await;
+        let last_position_counter = if back_test {
+            0
+        } else {
+            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await
+        };
         let last_price_counter =
             TransactionLog::get_last_transaction_id(&db, CounterType::Price).await;
         let last_pnl_counter = TransactionLog::get_last_transaction_id(&db, CounterType::Pnl).await;
