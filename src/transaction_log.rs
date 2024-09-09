@@ -306,7 +306,7 @@ impl TransactionLog {
 
     pub async fn get_price_market_data(
         db: &Database,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> HashMap<String, HashMap<String, Vec<PricePoint>>> {
         let item = PriceLog::default();

@@ -34,7 +34,7 @@ pub trait Entity {
         &self,
         db: &Database,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>>
     where
@@ -90,7 +90,7 @@ pub async fn search_items<T: Entity>(
     db: &Database,
     item: &T,
     mode: SearchMode,
-    limit: Option<usize>,
+    limit: Option<u32>,
     id: Option<u32>,
 ) -> Result<Vec<T>, Box<dyn error::Error>> {
     item.search(db, mode, limit, id).await
@@ -156,7 +156,7 @@ impl Entity for PositionLog {
         &self,
         db: &Database,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
@@ -196,7 +196,7 @@ impl Entity for PnlLog {
         &self,
         db: &Database,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
@@ -238,7 +238,7 @@ impl Entity for AppState {
         &self,
         db: &Database,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let query = doc! { "id": 1 };
@@ -279,7 +279,7 @@ impl Entity for PriceLog {
         &self,
         db: &Database,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
@@ -309,7 +309,7 @@ pub trait HelperCollection<T> {
         &self,
         query: Document,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<T>, Box<dyn error::Error>>;
 }
@@ -352,7 +352,7 @@ where
         &self,
         mut query: Document,
         mode: SearchMode,
-        limit: Option<usize>,
+        limit: Option<u32>,
         id: Option<u32>,
     ) -> Result<Vec<T>, Box<dyn error::Error>> {
         let mut items: Vec<T> = vec![];
