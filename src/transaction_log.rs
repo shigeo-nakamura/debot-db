@@ -19,6 +19,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::Mutex;
 
+use crate::delete_item_all;
 use crate::SearchMode;
 use crate::{
     create_unique_index, insert_item, search_item, search_items, update_item, Counter, CounterType,
@@ -233,11 +234,14 @@ impl TransactionLog {
             .await
             .expect("Error creating unique index");
 
-        let last_position_counter = if back_test {
-            0
-        } else {
-            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await
-        };
+        if back_test {
+            if let Err(e) = Self::delete_all_positions(&db).await {
+                panic!("delete_all_positions failed: {:?}", e);
+            }
+        }
+
+        let last_position_counter =
+            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await;
         let last_price_counter =
             TransactionLog::get_last_transaction_id(&db, CounterType::Price).await;
         let last_pnl_counter = TransactionLog::get_last_transaction_id(&db, CounterType::Pnl).await;
@@ -381,6 +385,11 @@ impl TransactionLog {
         };
         log::trace!("get_all_open_position: {:?}", items);
         items
+    }
+
+    async fn delete_all_positions(db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let item = PositionLog::default();
+        delete_item_all(db, &item).await
     }
 
     pub async fn insert_pnl(db: &Database, item: PnlLog) -> Result<(), Box<dyn error::Error>> {
