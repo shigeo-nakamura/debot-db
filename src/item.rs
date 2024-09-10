@@ -148,8 +148,9 @@ impl Entity for PositionLog {
         panic!("Not implemented")
     }
 
-    async fn delete_all(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
-        panic!("Not implemented")
+    async fn delete_all(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let collection = self.get_collection(db);
+        collection.delete_all().await
     }
 
     async fn search(
