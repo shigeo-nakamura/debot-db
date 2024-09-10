@@ -251,6 +251,13 @@ impl TransactionLog {
             last_pnl_counter,
         );
 
+        log::debug!(
+            "last_position_counter/last_price_counter/last_pnl_counter = {}/{}/{}",
+            last_position_counter,
+            last_price_counter,
+            last_pnl_counter
+        );
+
         TransactionLog {
             counter,
             db_r_name: db_r_name.to_owned(),
