@@ -7,7 +7,7 @@ pub enum CounterType {
 }
 
 pub struct CounterData {
-    max: u32,
+    max: Option<u32>,
     counter: std::sync::Mutex<u32>,
 }
 
@@ -19,9 +19,9 @@ pub struct Counter {
 
 impl Counter {
     pub fn new(
-        max_position_counter: u32,
-        max_price_counter: u32,
-        max_pnl_counter: u32,
+        max_position_counter: Option<u32>,
+        max_price_counter: Option<u32>,
+        max_pnl_counter: Option<u32>,
         position_counter: u32,
         price_counter: u32,
         pnl_counter: u32,
@@ -51,11 +51,15 @@ impl Counter {
 
         let mut counter = counter_data.counter.lock().unwrap();
         *counter += 1;
-        let mut id = *counter % counter_data.max;
-        if id == 0 {
-            id = 1;
+        let mut id = *counter;
+        if let Some(max_counter) = counter_data.max {
+            id = *counter % max_counter;
+            if id == 0 {
+                id = 1;
+            }
+            *counter = id;
         }
-        *counter = id;
+
         drop(counter);
         id
     }
