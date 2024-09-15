@@ -103,6 +103,54 @@ impl HasId for PriceLog {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum CandlePattern {
+    #[default]
+    None,
+    Hammer,
+    InvertedHammer,
+    BullishEngulfing,
+    BearishEngulfing,
+    Doji,
+    Marubozu,
+    MorningStar,
+    EveningStar,
+    ThreeWhiteSoldiers,
+    ThreeBlackCrows,
+    PiercingPattern,
+    DarkCloudCover,
+    Harami,
+    HaramiCross,
+    SpinningTop,
+}
+
+impl CandlePattern {
+    pub fn to_one_hot(&self) -> [Decimal; 20] {
+        let mut one_hot = [Decimal::ZERO; 20];
+
+        match self {
+            CandlePattern::None => one_hot[0] = Decimal::ONE,
+            CandlePattern::Hammer => one_hot[1] = Decimal::ONE,
+            CandlePattern::InvertedHammer => one_hot[2] = Decimal::ONE,
+            CandlePattern::BullishEngulfing => one_hot[3] = Decimal::ONE,
+            CandlePattern::BearishEngulfing => one_hot[4] = Decimal::ONE,
+            CandlePattern::Doji => one_hot[5] = Decimal::ONE,
+            CandlePattern::Marubozu => one_hot[6] = Decimal::ONE,
+            CandlePattern::MorningStar => one_hot[7] = Decimal::ONE,
+            CandlePattern::EveningStar => one_hot[8] = Decimal::ONE,
+            CandlePattern::ThreeWhiteSoldiers => one_hot[9] = Decimal::ONE,
+            CandlePattern::ThreeBlackCrows => one_hot[10] = Decimal::ONE,
+            CandlePattern::PiercingPattern => one_hot[11] = Decimal::ONE,
+            CandlePattern::DarkCloudCover => one_hot[12] = Decimal::ONE,
+            CandlePattern::Harami => one_hot[13] = Decimal::ONE,
+            CandlePattern::HaramiCross => one_hot[14] = Decimal::ONE,
+            CandlePattern::SpinningTop => one_hot[15] = Decimal::ONE,
+        }
+
+        one_hot
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct DebugLog {
     pub input_1: Decimal,
@@ -124,46 +172,16 @@ pub struct DebugLog {
     pub input_17: Decimal,
     pub input_18: Decimal,
     pub input_19: Decimal,
-    pub input_20: Decimal,
-    pub input_21: Decimal,
-    pub input_22: Decimal,
-    pub input_23: Decimal,
-    pub input_24: Decimal,
-    pub input_25: Decimal,
-    pub input_26: Decimal,
-    pub input_27: Decimal,
-    pub input_28: Decimal,
-    pub input_29: Decimal,
-    pub input_30: Decimal,
-    pub input_31: Decimal,
-    pub input_32: Decimal,
-    pub input_33: Decimal,
-    pub input_34: Decimal,
-    pub input_35: Decimal,
-    pub input_36: Decimal,
-    pub input_37: Decimal,
-    pub input_38: Decimal,
-    pub input_39: Decimal,
-    pub input_40: Decimal,
-    pub input_41: Decimal,
-    pub input_42: Decimal,
-    pub input_43: Decimal,
-    pub input_44: Decimal,
-    pub input_45: Decimal,
-    pub input_46: Decimal,
-    pub input_47: Decimal,
-    pub input_48: Decimal,
-    pub input_49: Decimal,
-    pub input_50: Decimal,
-    pub input_51: Decimal,
-    pub input_52: Decimal,
-    pub input_53: Decimal,
-    pub input_54: Decimal,
-    pub input_55: Decimal,
-    pub input_56: Decimal,
-    pub input_57: Decimal,
-    pub input_58: Decimal,
-    pub input_59: Decimal,
+    pub input_20: CandlePattern,
+    pub input_21: CandlePattern,
+    pub input_22: CandlePattern,
+    pub input_23: CandlePattern,
+    pub input_24: CandlePattern,
+    pub input_25: CandlePattern,
+    pub input_26: CandlePattern,
+    pub input_27: CandlePattern,
+    pub input_28: CandlePattern,
+    pub input_29: CandlePattern,
     pub output_1: Decimal,
     pub output_2: Decimal,
 }
