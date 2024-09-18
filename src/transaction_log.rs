@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 use shared_mongodb::{database, ClientHolder};
 use std::collections::HashMap;
 use std::error;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::Mutex;
@@ -463,10 +466,17 @@ pub struct ModelParams {
     db_name: String,
     client_holder: Arc<Mutex<ClientHolder>>,
     collection_name: String,
+    save_to_db: bool,
+    file_path: Option<String>,
 }
 
 impl ModelParams {
-    pub async fn new(mongodb_uri: &str, db_name: &str) -> Self {
+    pub async fn new(
+        mongodb_uri: &str,
+        db_name: &str,
+        save_to_db: bool,
+        file_path: Option<String>,
+    ) -> Self {
         // Set up the DB client holder
         let mut client_options = match ClientOptions::parse(mongodb_uri).await {
             Ok(client_options) => client_options,
@@ -482,6 +492,8 @@ impl ModelParams {
             db_name: db_name.to_owned(),
             client_holder,
             collection_name: "model_params".to_owned(),
+            save_to_db,
+            file_path,
         }
     }
 
@@ -497,6 +509,29 @@ impl ModelParams {
     }
 
     pub async fn save_model(
+        &self,
+        key: &str,
+        model: &SerializableModel,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if self.save_to_db {
+            self.save_model_to_db(key, model).await
+        } else {
+            self.save_model_to_file(key, model).await
+        }
+    }
+
+    pub async fn load_model(
+        &self,
+        key: &str,
+    ) -> Result<SerializableModel, Box<dyn std::error::Error>> {
+        if self.save_to_db {
+            self.load_model_from_db(key).await
+        } else {
+            self.load_model_from_file(key).await
+        }
+    }
+
+    async fn save_model_to_db(
         &self,
         key: &str,
         model: &SerializableModel,
@@ -525,7 +560,7 @@ impl ModelParams {
         Ok(())
     }
 
-    pub async fn load_model(
+    async fn load_model_from_db(
         &self,
         key: &str,
     ) -> Result<SerializableModel, Box<dyn std::error::Error>> {
@@ -544,5 +579,43 @@ impl ModelParams {
         } else {
             Err("Invalid data format".into())
         }
+    }
+
+    async fn save_model_to_file(
+        &self,
+        key: &str,
+        model: &SerializableModel,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let serialized_model = bincode::serialize(model)?;
+        let file_name = format!("{}.model", key);
+
+        let file_path = if let Some(ref dir) = self.file_path {
+            Path::new(dir).join(file_name)
+        } else {
+            Path::new(&file_name).to_path_buf()
+        };
+
+        let mut file = File::create(&file_path)?;
+        file.write_all(&serialized_model)?;
+        Ok(())
+    }
+
+    async fn load_model_from_file(
+        &self,
+        key: &str,
+    ) -> Result<SerializableModel, Box<dyn std::error::Error>> {
+        let file_name = format!("{}.model", key);
+
+        let file_path = if let Some(ref dir) = self.file_path {
+            Path::new(dir).join(file_name)
+        } else {
+            Path::new(&file_name).to_path_buf()
+        };
+
+        let mut file = File::open(&file_path)?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+        let model: SerializableModel = bincode::deserialize(&buffer)?;
+        Ok(model)
     }
 }
