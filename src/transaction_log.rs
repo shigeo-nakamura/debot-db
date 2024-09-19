@@ -345,7 +345,13 @@ impl TransactionLog {
         db: &Database,
         limit: Option<u32>,
         id: Option<u32>,
+        is_ascend: bool,
     ) -> HashMap<String, HashMap<String, Vec<PricePoint>>> {
+        let search_mode = if is_ascend {
+            SearchMode::Ascending
+        } else {
+            SearchMode::Descending
+        };
         let item = PriceLog::default();
         let items = if id.is_some() {
             match search_item(db, &item, id).await {
@@ -360,7 +366,7 @@ impl TransactionLog {
                 }
             }
         } else if limit.is_some() {
-            match search_items(db, &item, SearchMode::Descending, limit, None).await {
+            match search_items(db, &item, search_mode, limit, None).await {
                 Ok(items) => items,
                 Err(e) => {
                     log::warn!("get_price_market_data: {:?}", e);
@@ -368,7 +374,7 @@ impl TransactionLog {
                 }
             }
         } else {
-            match search_items(db, &item, SearchMode::Ascending, None, None).await {
+            match search_items(db, &item, search_mode, None, None).await {
                 Ok(items) => items,
                 Err(e) => {
                     log::warn!("get_price_market_data: {:?}", e);
