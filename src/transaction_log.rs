@@ -198,6 +198,7 @@ pub struct PositionLog {
     pub state: String,
     pub token_name: String,
     pub open_time_str: String,
+    pub open_timestamp: i64,
     pub close_time_str: String,
     pub average_open_price: Decimal,
     pub position_type: String,
