@@ -79,15 +79,24 @@ pub struct PricePoint {
     pub timestamp: i64,
     pub timestamp_str: String,
     pub price: Decimal,
+    pub volume: Option<Decimal>,
+    pub num_trades: Option<u64>,
 }
 
 impl PricePoint {
-    pub fn new(price: Decimal, timestamp: Option<i64>) -> Self {
+    pub fn new(
+        price: Decimal,
+        timestamp: Option<i64>,
+        volume: Option<Decimal>,
+        num_trades: Option<u64>,
+    ) -> Self {
         let time = timestamp.unwrap_or_else(|| chrono::Utc::now().timestamp());
         Self {
             timestamp: time,
             timestamp_str: time.to_datetime_string(),
             price,
+            volume,
+            num_trades,
         }
     }
 }
