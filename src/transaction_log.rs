@@ -286,11 +286,14 @@ impl TransactionLog {
             last_pnl_counter,
         );
 
-        log::debug!(
-            "last_position_counter/last_price_counter/last_pnl_counter = {}/{}/{}",
+        log::warn!(
+            "position = {}/{:?}, price = {}/{:?}, pnl = {}/{:?}",
             last_position_counter,
+            max_position_counter,
             last_price_counter,
-            last_pnl_counter
+            max_price_counter,
+            last_pnl_counter,
+            max_pnl_counter,
         );
 
         TransactionLog {
