@@ -81,6 +81,9 @@ pub struct PricePoint {
     pub price: Decimal,
     pub volume: Option<Decimal>,
     pub num_trades: Option<u64>,
+    pub funding_rate: Option<Decimal>,
+    pub open_interest: Option<Decimal>,
+    pub oracle_price: Option<Decimal>,
 }
 
 impl PricePoint {
@@ -89,6 +92,9 @@ impl PricePoint {
         timestamp: Option<i64>,
         volume: Option<Decimal>,
         num_trades: Option<u64>,
+        funding_rate: Option<Decimal>,
+        open_interest: Option<Decimal>,
+        oracle_price: Option<Decimal>,
     ) -> Self {
         let time = timestamp.unwrap_or_else(|| chrono::Utc::now().timestamp());
         Self {
@@ -97,6 +103,9 @@ impl PricePoint {
             price,
             volume,
             num_trades,
+            funding_rate,
+            open_interest,
+            oracle_price,
         }
     }
 }
