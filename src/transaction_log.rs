@@ -372,6 +372,30 @@ impl TransactionLog {
         Ok(())
     }
 
+    pub async fn copy_price(db_r: &Database, db_w: &Database, limit: Option<u32>) {
+        let item = PriceLog::default();
+        let items = {
+            match search_items(db_r, &item, SearchMode::Ascending, limit, None).await {
+                Ok(items) => items,
+                Err(e) => {
+                    log::error!("get price: {:?}", e);
+                    return;
+                }
+            }
+        };
+        log::debug!("get prices: num = {}", items.len());
+
+        for item in &items {
+            match insert_item(db_w, item).await {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("write price: {:?}", e);
+                    return;
+                }
+            }
+        }
+    }
+
     pub async fn get_price_market_data(
         db: &Database,
         limit: Option<u32>,
