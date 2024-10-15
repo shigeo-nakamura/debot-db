@@ -217,6 +217,9 @@ pub struct DebugLog {
     pub input_39: CandlePattern,
     pub output_1: Decimal,
     pub output_2: Decimal,
+    pub output_3: Option<Decimal>,
+    pub output_4: Option<Decimal>,
+    pub output_5: Option<Decimal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
