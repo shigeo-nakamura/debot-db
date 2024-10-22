@@ -659,7 +659,7 @@ impl ModelParams {
         model: &SerializableModel,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let serialized_model = bincode::serialize(model)?;
-        let file_name = format!("{}.model", key);
+        let file_name = format!("{}.bin", key);
 
         let file_path = if let Some(ref dir) = self.file_path {
             Path::new(dir).join(file_name)
@@ -676,7 +676,7 @@ impl ModelParams {
         &self,
         key: &str,
     ) -> Result<SerializableModel, Box<dyn std::error::Error>> {
-        let file_name = format!("{}.model", key);
+        let file_name = format!("{}.bin", key);
 
         let file_path = if let Some(ref dir) = self.file_path {
             Path::new(dir).join(file_name)
