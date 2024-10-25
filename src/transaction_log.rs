@@ -45,6 +45,8 @@ pub struct AppState {
     pub id: u32,
     pub last_execution_time: Option<SystemTime>,
     pub last_equity: Option<Decimal>,
+    pub ave_dd: Option<Decimal>,
+    pub max_dd: Option<Decimal>,
     pub curcuit_break: bool,
     pub error_time: Vec<String>,
     pub max_invested_amount: Decimal,
@@ -56,6 +58,8 @@ impl Default for AppState {
             id: 1,
             last_execution_time: None,
             last_equity: None,
+            ave_dd: None,
+            max_dd: None,
             curcuit_break: false,
             error_time: vec![],
             max_invested_amount: Decimal::ZERO,
@@ -500,6 +504,8 @@ impl TransactionLog {
         db: &Database,
         last_execution_time: Option<SystemTime>,
         last_equity: Option<Decimal>,
+        ave_dd: Option<Decimal>,
+        max_dd: Option<Decimal>,
         curcuit_break: bool,
         error_time: Option<String>,
         invested_amount: Decimal,
@@ -518,11 +524,19 @@ impl TransactionLog {
             item.last_equity = last_equity;
         }
 
-        if let Some(error_time) = error_time {
-            item.error_time.push(error_time);
+        if ave_dd.is_some() {
+            item.ave_dd = ave_dd;
+        }
+
+        if max_dd.is_some() {
+            item.max_dd = max_dd;
         }
 
         item.curcuit_break = curcuit_break;
+
+        if let Some(error_time) = error_time {
+            item.error_time.push(error_time);
+        }
 
         if item.max_invested_amount < invested_amount {
             item.max_invested_amount = invested_amount;
