@@ -511,7 +511,7 @@ impl TransactionLog {
         score: Option<Decimal>,
         curcuit_break: bool,
         error_time: Option<String>,
-        invested_amount: Decimal,
+        max_invested_amount: Option<Decimal>,
     ) -> Result<(), Box<dyn error::Error>> {
         let item = AppState::default();
         let mut item = match search_item(db, &item, Some(1)).await {
@@ -545,8 +545,8 @@ impl TransactionLog {
             item.error_time.push(error_time);
         }
 
-        if item.max_invested_amount < invested_amount {
-            item.max_invested_amount = invested_amount;
+        if let Some(max_invested_amount) = max_invested_amount {
+            item.max_invested_amount = max_invested_amount;
         }
 
         update_item(db, &item).await?;
