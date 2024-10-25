@@ -469,7 +469,7 @@ impl TransactionLog {
         result
     }
 
-    pub async fn get_all_open_positions(db: &Database) -> Vec<PositionLog> {
+    pub async fn get_all_positions(db: &Database) -> Vec<PositionLog> {
         let item = PositionLog::default();
         let items = match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
             Ok(items) => items.into_iter().collect(),
@@ -477,7 +477,7 @@ impl TransactionLog {
                 vec![]
             }
         };
-        log::trace!("get_all_open_position: {:?}", items);
+        log::trace!("get_all_position: {:?}", items);
         items
     }
 
