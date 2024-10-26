@@ -47,6 +47,8 @@ pub struct AppState {
     pub last_equity: Option<Decimal>,
     pub ave_dd: Option<Decimal>,
     pub max_dd: Option<Decimal>,
+    pub cumulative_return: Option<Decimal>,
+    pub cumulative_dd: Option<Decimal>,
     pub score: Option<Decimal>,
     pub curcuit_break: bool,
     pub error_time: Vec<String>,
@@ -61,6 +63,8 @@ impl Default for AppState {
             last_equity: None,
             ave_dd: None,
             max_dd: None,
+            cumulative_return: None,
+            cumulative_dd: None,
             score: None,
             curcuit_break: false,
             error_time: vec![],
@@ -508,6 +512,8 @@ impl TransactionLog {
         last_equity: Option<Decimal>,
         ave_dd: Option<Decimal>,
         max_dd: Option<Decimal>,
+        cumulative_return: Option<Decimal>,
+        cumulative_dd: Option<Decimal>,
         score: Option<Decimal>,
         curcuit_break: bool,
         error_time: Option<String>,
@@ -533,6 +539,14 @@ impl TransactionLog {
 
         if max_dd.is_some() {
             item.max_dd = max_dd;
+        }
+
+        if cumulative_return.is_some() {
+            item.cumulative_return = cumulative_return;
+        }
+
+        if cumulative_dd.is_some() {
+            item.cumulative_dd = cumulative_dd;
         }
 
         if score.is_some() {
