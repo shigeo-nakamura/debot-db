@@ -50,6 +50,8 @@ pub struct AppState {
     pub cumulative_return: Option<Decimal>,
     pub cumulative_dd: Option<Decimal>,
     pub score: Option<Decimal>,
+    pub score_2: Option<Decimal>,
+    pub score_3: Option<Decimal>,
     pub curcuit_break: bool,
     pub error_time: Vec<String>,
     pub max_invested_amount: Decimal,
@@ -66,6 +68,8 @@ impl Default for AppState {
             cumulative_return: None,
             cumulative_dd: None,
             score: None,
+            score_2: None,
+            score_3: None,
             curcuit_break: false,
             error_time: vec![],
             max_invested_amount: Decimal::ZERO,
@@ -515,6 +519,8 @@ impl TransactionLog {
         cumulative_return: Option<Decimal>,
         cumulative_dd: Option<Decimal>,
         score: Option<Decimal>,
+        score_2: Option<Decimal>,
+        score_3: Option<Decimal>,
         curcuit_break: bool,
         error_time: Option<String>,
         max_invested_amount: Option<Decimal>,
@@ -551,6 +557,14 @@ impl TransactionLog {
 
         if score.is_some() {
             item.score = score;
+        }
+
+        if score_2.is_some() {
+            item.score_2 = score_2;
+        }
+
+        if score_3.is_some() {
+            item.score_3 = score_3;
         }
 
         item.curcuit_break = curcuit_break;
