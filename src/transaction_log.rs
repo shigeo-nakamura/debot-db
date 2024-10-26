@@ -307,6 +307,9 @@ impl TransactionLog {
             if let Err(e) = Self::delete_all_positions(&db).await {
                 panic!("delete_all_positions failed: {:?}", e);
             }
+            if let Err(e) = Self::delete_app_state(&db).await {
+                panic!("delete_app_state failed: {:?}", e);
+            }
         }
 
         let last_position_counter =
@@ -510,6 +513,11 @@ impl TransactionLog {
         }
     }
 
+    async fn delete_app_state(db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let item = AppState::default();
+        delete_item_all(db, &item).await
+    }
+
     pub async fn update_app_state(
         db: &Database,
         last_execution_time: Option<SystemTime>,
@@ -543,8 +551,13 @@ impl TransactionLog {
             item.ave_dd = ave_dd;
         }
 
-        if max_dd.is_some() {
-            item.max_dd = max_dd;
+        if let Some(max_dd_val) = max_dd {
+            if item
+                .max_dd
+                .map_or(true, |item_max_dd| max_dd_val > item_max_dd)
+            {
+                item.max_dd = Some(max_dd_val);
+            }
         }
 
         if cumulative_return.is_some() {
