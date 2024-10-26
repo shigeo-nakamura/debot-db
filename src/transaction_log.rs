@@ -47,8 +47,8 @@ pub struct AppState {
     pub last_equity: Option<Decimal>,
     pub ave_dd: Option<Decimal>,
     pub max_dd: Option<Decimal>,
-    pub cumulative_return: Option<Decimal>,
-    pub cumulative_dd: Option<Decimal>,
+    pub cumulative_return: Decimal,
+    pub cumulative_dd: Decimal,
     pub score: Option<Decimal>,
     pub score_2: Option<Decimal>,
     pub score_3: Option<Decimal>,
@@ -65,8 +65,8 @@ impl Default for AppState {
             last_equity: None,
             ave_dd: None,
             max_dd: None,
-            cumulative_return: None,
-            cumulative_dd: None,
+            cumulative_return: Decimal::ZERO,
+            cumulative_dd: Decimal::ZERO,
             score: None,
             score_2: None,
             score_3: None,
@@ -548,11 +548,11 @@ impl TransactionLog {
         }
 
         if cumulative_return.is_some() {
-            item.cumulative_return = cumulative_return;
+            item.cumulative_return += cumulative_return.unwrap();
         }
 
         if cumulative_dd.is_some() {
-            item.cumulative_dd = cumulative_dd;
+            item.cumulative_dd += cumulative_dd.unwrap();
         }
 
         if score.is_some() {
