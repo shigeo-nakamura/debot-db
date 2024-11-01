@@ -162,8 +162,8 @@ pub enum CandlePattern {
 }
 
 impl CandlePattern {
-    pub fn to_one_hot(&self) -> [Decimal; 20] {
-        let mut one_hot = [Decimal::ZERO; 20];
+    pub fn to_one_hot(&self) -> [Decimal; 16] {
+        let mut one_hot = [Decimal::ZERO; 16];
 
         match self {
             CandlePattern::None => one_hot[0] = Decimal::ONE,
