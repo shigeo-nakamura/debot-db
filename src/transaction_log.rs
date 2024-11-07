@@ -3,8 +3,8 @@
 use bson::doc;
 use bson::Bson;
 use bson::Document;
+use debot_utils::get_local_time;
 use debot_utils::HasId;
-use debot_utils::ToDateTimeString;
 use mongodb::Collection;
 use mongodb::{
     options::{ClientOptions, Tls, TlsOptions},
@@ -112,10 +112,11 @@ impl PricePoint {
         open_interest: Option<Decimal>,
         oracle_price: Option<Decimal>,
     ) -> Self {
-        let time = timestamp.unwrap_or_else(|| chrono::Utc::now().timestamp());
+        let (local_timestamp, timestamp_str) = get_local_time();
+        let timestamp = timestamp.unwrap_or(local_timestamp);
         Self {
-            timestamp: time,
-            timestamp_str: time.to_datetime_string(),
+            timestamp,
+            timestamp_str,
             price,
             volume,
             num_trades,
