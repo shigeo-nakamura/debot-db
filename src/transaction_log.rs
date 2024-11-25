@@ -85,6 +85,7 @@ pub struct AppState {
     pub curcuit_break: bool,
     pub error_time: Vec<String>,
     pub max_invested_amount: Decimal,
+    pub fund_configs: Option<Vec<FundConfig>>,
 }
 
 impl Default for AppState {
@@ -103,6 +104,7 @@ impl Default for AppState {
             curcuit_break: false,
             error_time: vec![],
             max_invested_amount: Decimal::ZERO,
+            fund_configs: Some(vec![]),
         }
     }
 }
@@ -563,6 +565,7 @@ impl TransactionLog {
         curcuit_break: bool,
         error_time: Option<String>,
         max_invested_amount: Option<Decimal>,
+        fund_configs: Option<Vec<FundConfig>>,
     ) -> Result<(), Box<dyn error::Error>> {
         let item = AppState::default();
         let mut item = match search_item(db, &item, Some(1)).await {
@@ -619,6 +622,10 @@ impl TransactionLog {
 
         if let Some(max_invested_amount) = max_invested_amount {
             item.max_invested_amount = max_invested_amount;
+        }
+
+        if let Some(fund_configs) = fund_configs {
+            item.fund_configs = Some(fund_configs);
         }
 
         update_item(db, &item).await?;
