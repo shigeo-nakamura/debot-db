@@ -24,6 +24,7 @@ use tokio::sync::Mutex;
 
 use crate::delete_item_all;
 use crate::SearchMode;
+use crate::TradingStrategy;
 use crate::{
     create_unique_index, insert_item, search_item, search_items, update_item, Counter, CounterType,
     Entity,
@@ -38,6 +39,35 @@ async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
             0
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum SampleTerm {
+    TradingTerm,
+    ShortTerm,
+    LongTerm,
+}
+
+impl SampleTerm {
+    pub fn to_numeric(&self) -> Decimal {
+        match self {
+            SampleTerm::TradingTerm => Decimal::new(1, 0),
+            SampleTerm::ShortTerm => Decimal::new(2, 0),
+            SampleTerm::LongTerm => Decimal::new(3, 0),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct FundConfig {
+    pub token: String,
+    pub trading_strategy: TradingStrategy,
+    pub amount_per_strategy: Decimal,
+    pub risk_reward: Decimal,
+    pub take_profit_ratio: Option<Decimal>,
+    pub atr_spread: Option<Decimal>,
+    pub atr_term: SampleTerm,
+    pub open_hours: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
