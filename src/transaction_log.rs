@@ -517,7 +517,8 @@ impl TransactionLog {
         let item = PositionLog::default();
         let items = match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
             Ok(items) => items.into_iter().collect(),
-            Err(_) => {
+            Err(e) => {
+                log::error!("get_all_position: {:?}", e);
                 vec![]
             }
         };
