@@ -62,7 +62,7 @@ impl SampleTerm {
 pub struct FundConfig {
     pub token: String,
     pub trading_strategy: TradingStrategy,
-    pub amount_per_strategy: Decimal,
+    pub balance_per_strategy: Decimal,
     pub risk_reward: Decimal,
     pub take_profit_ratio: Option<Decimal>,
     pub atr_spread: Option<Decimal>,
