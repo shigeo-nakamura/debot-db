@@ -578,12 +578,12 @@ impl TransactionLog {
             item.last_execution_time = last_execution_time;
         }
 
-        if last_equity.is_some() {
-            item.last_equity = last_equity;
+        if let Some(last_equity) = last_equity {
+            item.last_equity = Some(last_equity.round());
         }
 
-        if ave_dd.is_some() {
-            item.ave_dd = ave_dd;
+        if let Some(ave_dd) = ave_dd {
+            item.ave_dd = Some(ave_dd.round());
         }
 
         if let Some(max_dd_val) = max_dd {
@@ -591,16 +591,16 @@ impl TransactionLog {
                 .max_dd
                 .map_or(true, |item_max_dd| max_dd_val > item_max_dd)
             {
-                item.max_dd = Some(max_dd_val);
+                item.max_dd = Some(max_dd_val.round());
             }
         }
 
-        if cumulative_return.is_some() {
-            item.cumulative_return += cumulative_return.unwrap();
+        if let Some(cumulative_return) = cumulative_return {
+            item.cumulative_return += cumulative_return.round();
         }
 
-        if cumulative_dd.is_some() {
-            item.cumulative_dd += cumulative_dd.unwrap();
+        if let Some(cumulative_dd) = cumulative_dd {
+            item.cumulative_dd += cumulative_dd.round();
         }
 
         if score.is_some() {
@@ -622,7 +622,7 @@ impl TransactionLog {
         }
 
         if let Some(max_invested_amount) = max_invested_amount {
-            item.max_invested_amount = max_invested_amount;
+            item.max_invested_amount = max_invested_amount.round();
         }
 
         if let Some(fund_configs) = fund_configs {
