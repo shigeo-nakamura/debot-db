@@ -515,13 +515,17 @@ impl TransactionLog {
 
     pub async fn get_all_positions(db: &Database) -> Vec<PositionLog> {
         let item = PositionLog::default();
-        let items = match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
-            Ok(items) => items.into_iter().collect(),
-            Err(e) => {
-                log::error!("get_all_position: {:?}", e);
-                vec![]
-            }
-        };
+        let mut items =
+            match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
+                Ok(items) => items.into_iter().collect(),
+                Err(e) => {
+                    log::error!("get_all_position: {:?}", e);
+                    vec![]
+                }
+            };
+
+        items.sort_by_key(|pos| pos.open_timestamp);
+
         log::trace!("get_all_position: {:?}", items);
         items
     }
