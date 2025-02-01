@@ -32,7 +32,16 @@ use crate::{
 
 async fn get_last_id<T: Default + Entity + HasId>(db: &Database) -> u32 {
     let item = T::default();
-    match search_items(db, &item, crate::SearchMode::Descending, Some(1), None).await {
+    match search_items(
+        db,
+        &item,
+        crate::SearchMode::Descending,
+        Some(1),
+        None,
+        Some("id"),
+    )
+    .await
+    {
         Ok(mut items) => items.pop().and_then(|item| item.id()).unwrap_or(0),
         Err(e) => {
             log::info!("get_last_id: {:?}", e);
@@ -430,7 +439,7 @@ impl TransactionLog {
     pub async fn copy_price(db_r: &Database, db_w: &Database, limit: Option<u32>) {
         let item = PriceLog::default();
         let items = {
-            match search_items(db_r, &item, SearchMode::Ascending, limit, None).await {
+            match search_items(db_r, &item, SearchMode::Ascending, limit, None, Some("id")).await {
                 Ok(items) => items,
                 Err(e) => {
                     log::error!("get price: {:?}", e);
@@ -462,9 +471,10 @@ impl TransactionLog {
         } else {
             SearchMode::Descending
         };
+        let sort_key = Some("timestamp");
         let item = PriceLog::default();
         let items = if id.is_some() {
-            match search_item(db, &item, id).await {
+            match search_item(db, &item, id, sort_key).await {
                 Ok(items) => {
                     let mut item_vec = Vec::new();
                     item_vec.push(items);
@@ -476,7 +486,7 @@ impl TransactionLog {
                 }
             }
         } else if limit.is_some() {
-            match search_items(db, &item, search_mode, limit, None).await {
+            match search_items(db, &item, search_mode, limit, None, sort_key).await {
                 Ok(items) => items,
                 Err(e) => {
                     log::warn!("get_price_market_data: {:?}", e);
@@ -484,7 +494,7 @@ impl TransactionLog {
                 }
             }
         } else {
-            match search_items(db, &item, search_mode, None, None).await {
+            match search_items(db, &item, search_mode, None, None, sort_key).await {
                 Ok(items) => items,
                 Err(e) => {
                     log::warn!("get_price_market_data: {:?}", e);
@@ -515,14 +525,22 @@ impl TransactionLog {
 
     pub async fn get_all_positions(db: &Database) -> Vec<PositionLog> {
         let item = PositionLog::default();
-        let mut items =
-            match search_items(db, &item, crate::SearchMode::Ascending, None, None).await {
-                Ok(items) => items.into_iter().collect(),
-                Err(e) => {
-                    log::error!("get_all_position: {:?}", e);
-                    vec![]
-                }
-            };
+        let mut items = match search_items(
+            db,
+            &item,
+            crate::SearchMode::Ascending,
+            None,
+            None,
+            Some("id"),
+        )
+        .await
+        {
+            Ok(items) => items.into_iter().collect(),
+            Err(e) => {
+                log::error!("get_all_position: {:?}", e);
+                vec![]
+            }
+        };
 
         items.sort_by_key(|pos| pos.open_timestamp);
 
@@ -542,7 +560,7 @@ impl TransactionLog {
 
     pub async fn get_app_state(db: &Database) -> AppState {
         let item = AppState::default();
-        match search_item(db, &item, Some(1)).await {
+        match search_item(db, &item, Some(1), Some("id")).await {
             Ok(item) => item,
             Err(e) => {
                 log::warn!("get_app_state: {:?}", e);
@@ -573,7 +591,7 @@ impl TransactionLog {
         fund_configs: Option<Vec<FundConfig>>,
     ) -> Result<(), Box<dyn error::Error>> {
         let item = AppState::default();
-        let mut item = match search_item(db, &item, Some(1)).await {
+        let mut item = match search_item(db, &item, Some(1), Some("id")).await {
             Ok(prev_item) => prev_item,
             Err(_) => item,
         };

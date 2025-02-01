@@ -36,6 +36,7 @@ pub trait Entity {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: Option<&str>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>>
     where
         Self: std::marker::Sized;
@@ -92,16 +93,20 @@ pub async fn search_items<T: Entity>(
     mode: SearchMode,
     limit: Option<u32>,
     id: Option<u32>,
+    sort_key: Option<&str>,
 ) -> Result<Vec<T>, Box<dyn error::Error>> {
-    item.search(db, mode, limit, id).await
+    item.search(db, mode, limit, id, sort_key).await
 }
 
 pub async fn search_item<T: Entity>(
     db: &Database,
     item: &T,
     id: Option<u32>,
+    sort_key: Option<&str>,
 ) -> Result<T, Box<dyn error::Error>> {
-    let mut items = item.search(db, SearchMode::ById, None, id).await?;
+    let mut items = item
+        .search(db, SearchMode::ById, None, id, sort_key)
+        .await?;
     if items.len() == 1 {
         Ok(items.pop().unwrap())
     } else {
@@ -159,13 +164,15 @@ impl Entity for PositionLog {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: Option<&str>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id() != None {
             query = doc! { "id": self.id().unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query, mode, limit, id).await
+        let sort_key = sort_key.unwrap_or("id");
+        collection.search(query, mode, limit, id, &sort_key).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -199,13 +206,15 @@ impl Entity for PnlLog {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: Option<&str>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id != None {
             query = doc! { "id": self.id.unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query, mode, limit, id).await
+        let sort_key = sort_key.unwrap_or("id");
+        collection.search(query, mode, limit, id, &sort_key).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -242,10 +251,12 @@ impl Entity for AppState {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: Option<&str>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let query = doc! { "id": 1 };
         let collection = self.get_collection(db);
-        collection.search(query, mode, limit, id).await
+        let sort_key = sort_key.unwrap_or("id");
+        collection.search(query, mode, limit, id, &sort_key).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -283,13 +294,15 @@ impl Entity for PriceLog {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: Option<&str>,
     ) -> Result<Vec<Self>, Box<dyn error::Error>> {
         let mut query = doc! { "id": { "$gt": 0 }};
         if self.id != None {
             query = doc! { "id": self.id.unwrap() };
         }
         let collection = self.get_collection(db);
-        collection.search(query, mode, limit, id).await
+        let sort_key = sort_key.unwrap_or("id");
+        collection.search(query, mode, limit, id, &sort_key).await
     }
 
     fn get_collection_name(&self) -> &str {
@@ -313,6 +326,7 @@ pub trait HelperCollection<T> {
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: &str,
     ) -> Result<Vec<T>, Box<dyn error::Error>>;
 }
 
@@ -356,14 +370,26 @@ where
         mode: SearchMode,
         limit: Option<u32>,
         id: Option<u32>,
+        sort_key: &str,
     ) -> Result<Vec<T>, Box<dyn error::Error>> {
         let mut items: Vec<T> = vec![];
+
+        let sort_key = match sort_key {
+            "id" => "id",
+            "timestamp" => "price_point.timestamp",
+            _ => {
+                return Err(Box::new(Error::new(
+                    ErrorKind::InvalidInput,
+                    "Invalid sort key",
+                )))
+            }
+        };
 
         let find_options = match mode {
             SearchMode::Ascending => {
                 let builder = FindOptions::builder()
                     .allow_disk_use(true)
-                    .sort(doc! { "id": 1 });
+                    .sort(doc! { sort_key: 1 });
 
                 if let Some(limit_value) = limit {
                     builder.limit(limit_value as i64).build()
@@ -374,7 +400,7 @@ where
             SearchMode::Descending => {
                 let builder = FindOptions::builder()
                     .allow_disk_use(true)
-                    .sort(doc! { "id": -1 });
+                    .sort(doc! { sort_key: -1 });
 
                 if let Some(limit_value) = limit {
                     builder.limit(limit_value as i64).build()
