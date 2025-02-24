@@ -374,9 +374,8 @@ where
     ) -> Result<Vec<T>, Box<dyn error::Error>> {
         let mut items: Vec<T> = vec![];
 
-        let sort_key = match sort_key {
-            "id" => "id",
-            "timestamp" => "price_point.timestamp",
+        match sort_key {
+            "id" | "open_timestamp" | "price_point.timestamp" => {}
             _ => {
                 return Err(Box::new(Error::new(
                     ErrorKind::InvalidInput,

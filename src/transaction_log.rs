@@ -471,40 +471,24 @@ impl TransactionLog {
         } else {
             SearchMode::Descending
         };
-        let sort_key = Some("timestamp");
+        let sort_key = Some("price_point.timestamp");
         let item = PriceLog::default();
-        let items = if id.is_some() {
-            match search_item(db, &item, id, sort_key).await {
-                Ok(items) => {
-                    let mut item_vec = Vec::new();
-                    item_vec.push(items);
-                    item_vec
-                }
-                Err(e) => {
-                    log::warn!("get_price_market_data: {:?}", e);
-                    return HashMap::new();
-                }
-            }
-        } else if limit.is_some() {
-            match search_items(db, &item, search_mode, limit, None, sort_key).await {
-                Ok(items) => items,
-                Err(e) => {
-                    log::warn!("get_price_market_data: {:?}", e);
-                    return HashMap::new();
-                }
-            }
-        } else {
-            match search_items(db, &item, search_mode, None, None, sort_key).await {
-                Ok(items) => items,
-                Err(e) => {
-                    log::warn!("get_price_market_data: {:?}", e);
-                    return HashMap::new();
-                }
-            }
+
+        let items = match id {
+            Some(id) => search_item(db, &item, Some(id), sort_key)
+                .await
+                .map(|item| vec![item]),
+            None => search_items(db, &item, search_mode, limit, None, sort_key).await,
         };
 
-        let mut result = HashMap::new();
+        let Ok(mut items) = items else {
+            log::warn!("get_price_market_data: search failed");
+            return HashMap::new();
+        };
 
+        items.sort_by_key(|p| p.price_point.timestamp);
+
+        let mut result = HashMap::new();
         for price_log in items {
             result
                 .entry(price_log.name)
@@ -514,37 +498,41 @@ impl TransactionLog {
                 .push(price_log.price_point);
         }
 
-        for (_, token_map) in &mut result {
-            for (_, price_points) in token_map {
-                price_points.sort_by_key(|pp| pp.timestamp);
-            }
-        }
-
         result
     }
 
-    pub async fn get_all_positions(db: &Database) -> Vec<PositionLog> {
+    pub async fn get_all_positions(
+        db: &Database,
+        limit: Option<u32>,
+        id: Option<u32>,
+        is_ascend: bool,
+    ) -> Vec<PositionLog> {
+        let search_mode = if is_ascend {
+            SearchMode::Ascending
+        } else {
+            SearchMode::Descending
+        };
+        let sort_key = Some("open_timestamp");
         let item = PositionLog::default();
-        let mut items = match search_items(
-            db,
-            &item,
-            crate::SearchMode::Ascending,
-            None,
-            None,
-            Some("id"),
-        )
-        .await
-        {
-            Ok(items) => items.into_iter().collect(),
-            Err(e) => {
-                log::error!("get_all_position: {:?}", e);
-                vec![]
+
+        let items = if let Some(id) = id {
+            match search_item(db, &item, Some(id), sort_key).await {
+                Ok(position) => vec![position],
+                Err(e) => {
+                    log::warn!("get_all_positions: {:?}", e);
+                    vec![]
+                }
+            }
+        } else {
+            match search_items(db, &item, search_mode, limit, None, sort_key).await {
+                Ok(positions) => positions,
+                Err(e) => {
+                    log::warn!("get_all_positions: {:?}", e);
+                    vec![]
+                }
             }
         };
 
-        items.sort_by_key(|pos| pos.open_timestamp);
-
-        log::trace!("get_all_position: {:?}", items);
         items
     }
 
