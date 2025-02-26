@@ -76,7 +76,7 @@ pub struct FundConfig {
     pub take_profit_ratio: Option<Decimal>,
     pub atr_spread: Option<Decimal>,
     pub atr_term: SampleTerm,
-    pub open_hours: i64,
+    pub open_minutes: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
