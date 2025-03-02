@@ -460,6 +460,30 @@ impl TransactionLog {
         }
     }
 
+    pub async fn copy_position(db_r: &Database, db_w: &Database, limit: Option<u32>) {
+        let item = PositionLog::default();
+        let items = {
+            match search_items(db_r, &item, SearchMode::Ascending, limit, None, Some("id")).await {
+                Ok(items) => items,
+                Err(e) => {
+                    log::error!("get position: {:?}", e);
+                    return;
+                }
+            }
+        };
+        log::debug!("get position: num = {}", items.len());
+
+        for item in &items {
+            match insert_item(db_w, item).await {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("write position: {:?}", e);
+                    return;
+                }
+            }
+        }
+    }
+
     pub async fn get_price_market_data(
         db: &Database,
         limit: Option<u32>,
