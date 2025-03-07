@@ -50,20 +50,10 @@ pub trait Entity {
         db.collection::<Self>(self.get_collection_name())
     }
 
-    async fn create_unique_index(&self, db: &Database) -> Result<(), Box<dyn error::Error>>
+    async fn create_indexes(&self, db: &Database) -> Result<(), Box<dyn error::Error>>
     where
         Self: std::marker::Sized,
-        Self: std::marker::Send,
-    {
-        let options = IndexOptions::builder().unique(true).build();
-        let model = IndexModel::builder()
-            .keys(doc! {"id": 1})
-            .options(options)
-            .build();
-        let collection = self.get_collection(db);
-        collection.create_index(model, None).await?;
-        Ok(())
-    }
+        Self: std::marker::Send;
 }
 
 pub async fn insert_item<T: Entity>(db: &Database, item: &T) -> Result<(), Box<dyn error::Error>> {
@@ -119,22 +109,47 @@ pub async fn search_item<T: Entity>(
 
 pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Error>> {
     let item = PositionLog::default();
-    item.create_unique_index(db).await?;
+    item.create_indexes(db).await?;
 
     let item = AppState::default();
-    item.create_unique_index(db).await?;
+    item.create_indexes(db).await?;
 
     let item = PriceLog::default();
-    item.create_unique_index(db).await?;
+    item.create_indexes(db).await?;
 
     let item = PnlLog::default();
-    item.create_unique_index(db).await?;
+    item.create_indexes(db).await?;
 
     Ok(())
 }
 
 #[async_trait]
 impl Entity for PositionLog {
+    async fn create_indexes(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let collection = self.get_collection(db);
+
+        let id_index = IndexModel::builder()
+            .keys(doc! {"id": 1})
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+
+        let open_timestamp_index = IndexModel::builder()
+            .keys(doc! {"open_timestamp": 1})
+            .build();
+
+        let open_timestamp_index_2 = IndexModel::builder()
+            .keys(doc! {"open_timestamp": -1})
+            .build();
+
+        collection.create_index(id_index, None).await?;
+        collection.create_index(open_timestamp_index, None).await?;
+        collection
+            .create_index(open_timestamp_index_2, None)
+            .await?;
+
+        Ok(())
+    }
+
     async fn insert(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
         let collection = self.get_collection(db);
         collection.insert_one(self, None).await?;
@@ -182,6 +197,19 @@ impl Entity for PositionLog {
 
 #[async_trait]
 impl Entity for PnlLog {
+    async fn create_indexes(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let collection = self.get_collection(db);
+
+        let id_index = IndexModel::builder()
+            .keys(doc! {"id": 1})
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+
+        collection.create_index(id_index, None).await?;
+
+        Ok(())
+    }
+
     async fn insert(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
         let collection = self.get_collection(db);
         collection.insert_one(self, None).await?;
@@ -224,6 +252,19 @@ impl Entity for PnlLog {
 
 #[async_trait]
 impl Entity for AppState {
+    async fn create_indexes(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let collection = self.get_collection(db);
+
+        let id_index = IndexModel::builder()
+            .keys(doc! {"id": 1})
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+
+        collection.create_index(id_index, None).await?;
+
+        Ok(())
+    }
+
     async fn insert(&self, _db: &Database) -> Result<(), Box<dyn error::Error>> {
         panic!("Not implemented")
     }
@@ -266,6 +307,33 @@ impl Entity for AppState {
 
 #[async_trait]
 impl Entity for PriceLog {
+    async fn create_indexes(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
+        let collection = self.get_collection(db);
+
+        let id_index = IndexModel::builder()
+            .keys(doc! {"id": 1})
+            .options(IndexOptions::builder().unique(true).build())
+            .build();
+
+        let price_point_timestamp_index = IndexModel::builder()
+            .keys(doc! {"price_point.timestamp": 1})
+            .build();
+
+        let price_point_timestamp_index_2 = IndexModel::builder()
+            .keys(doc! {"price_point.timestamp": -1})
+            .build();
+
+        collection.create_index(id_index, None).await?;
+        collection
+            .create_index(price_point_timestamp_index, None)
+            .await?;
+        collection
+            .create_index(price_point_timestamp_index_2, None)
+            .await?;
+
+        Ok(())
+    }
+
     async fn insert(&self, db: &Database) -> Result<(), Box<dyn error::Error>> {
         let collection = self.get_collection(db);
         collection.insert_one(self, None).await?;
