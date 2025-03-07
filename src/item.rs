@@ -387,7 +387,7 @@ where
         let find_options = match mode {
             SearchMode::Ascending => {
                 let builder = FindOptions::builder()
-                    .allow_disk_use(true)
+                    .allow_disk_use(Some(true))
                     .sort(doc! { sort_key: 1 });
 
                 if let Some(limit_value) = limit {
@@ -398,7 +398,7 @@ where
             }
             SearchMode::Descending => {
                 let builder = FindOptions::builder()
-                    .allow_disk_use(true)
+                    .allow_disk_use(Some(true))
                     .sort(doc! { sort_key: -1 });
 
                 if let Some(limit_value) = limit {
@@ -416,7 +416,7 @@ where
                         "ID not provided".to_string(),
                     )));
                 }
-                FindOptions::default()
+                FindOptions::builder().allow_disk_use(Some(true)).build()
             }
         };
 
