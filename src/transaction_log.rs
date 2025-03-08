@@ -666,6 +666,14 @@ impl TransactionLog {
         update_item(db, &item).await?;
         Ok(())
     }
+
+    pub fn db_w_name(&self) -> &str {
+        &self.db_w_name
+    }
+
+    pub fn db_r_name(&self) -> &str {
+        &self.db_r_name
+    }
 }
 
 #[derive(Clone)]
