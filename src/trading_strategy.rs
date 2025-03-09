@@ -10,13 +10,18 @@ pub enum TrendType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
     RandomWalk(TrendType),
-    RandomForest(TrendType),
+    MeanReversion(TrendType),
+    RandomFlashCrashDetector(TrendType),
+    FlashCrashDetector(TrendType),
 }
 
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::RandomWalk(t) | TradingStrategy::RandomForest(t) => t,
+            TradingStrategy::RandomWalk(t)
+            | TradingStrategy::MeanReversion(t)
+            | TradingStrategy::RandomFlashCrashDetector(t)
+            | TradingStrategy::FlashCrashDetector(t) => t,
         }
     }
 }
@@ -27,38 +32,83 @@ impl PartialEq for TradingStrategy {
             (
                 TradingStrategy::RandomWalk(TrendType::Any),
                 TradingStrategy::RandomWalk(TrendType::Up),
-            ) => true,
-            (
-                TradingStrategy::RandomWalk(TrendType::Any),
-                TradingStrategy::RandomWalk(TrendType::Down),
-            ) => true,
-            (
+            )
+            | (
                 TradingStrategy::RandomWalk(TrendType::Up),
                 TradingStrategy::RandomWalk(TrendType::Any),
-            ) => true,
-            (
+            )
+            | (
+                TradingStrategy::RandomWalk(TrendType::Any),
+                TradingStrategy::RandomWalk(TrendType::Down),
+            )
+            | (
                 TradingStrategy::RandomWalk(TrendType::Down),
                 TradingStrategy::RandomWalk(TrendType::Any),
             ) => true,
             (TradingStrategy::RandomWalk(t1), TradingStrategy::RandomWalk(t2)) if t1 == t2 => true,
 
             (
-                TradingStrategy::RandomForest(TrendType::Any),
-                TradingStrategy::RandomForest(TrendType::Up),
+                TradingStrategy::MeanReversion(TrendType::Any),
+                TradingStrategy::MeanReversion(TrendType::Up),
+            )
+            | (
+                TradingStrategy::MeanReversion(TrendType::Up),
+                TradingStrategy::MeanReversion(TrendType::Any),
+            )
+            | (
+                TradingStrategy::MeanReversion(TrendType::Any),
+                TradingStrategy::MeanReversion(TrendType::Down),
+            )
+            | (
+                TradingStrategy::MeanReversion(TrendType::Down),
+                TradingStrategy::MeanReversion(TrendType::Any),
+            ) => true,
+            (TradingStrategy::MeanReversion(t1), TradingStrategy::MeanReversion(t2))
+                if t1 == t2 =>
+            {
+                true
+            }
+
+            (
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Up),
+            )
+            | (
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Up),
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
+            )
+            | (
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Down),
+            )
+            | (
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Down),
+                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
             ) => true,
             (
-                TradingStrategy::RandomForest(TrendType::Any),
-                TradingStrategy::RandomForest(TrendType::Down),
-            ) => true,
+                TradingStrategy::RandomFlashCrashDetector(t1),
+                TradingStrategy::RandomFlashCrashDetector(t2),
+            ) if t1 == t2 => true,
+
             (
-                TradingStrategy::RandomForest(TrendType::Up),
-                TradingStrategy::RandomForest(TrendType::Any),
+                TradingStrategy::FlashCrashDetector(TrendType::Any),
+                TradingStrategy::FlashCrashDetector(TrendType::Up),
+            )
+            | (
+                TradingStrategy::FlashCrashDetector(TrendType::Up),
+                TradingStrategy::FlashCrashDetector(TrendType::Any),
+            )
+            | (
+                TradingStrategy::FlashCrashDetector(TrendType::Any),
+                TradingStrategy::FlashCrashDetector(TrendType::Down),
+            )
+            | (
+                TradingStrategy::FlashCrashDetector(TrendType::Down),
+                TradingStrategy::FlashCrashDetector(TrendType::Any),
             ) => true,
-            (
-                TradingStrategy::RandomForest(TrendType::Down),
-                TradingStrategy::RandomForest(TrendType::Any),
-            ) => true,
-            (TradingStrategy::RandomForest(t1), TradingStrategy::RandomForest(t2)) if t1 == t2 => {
+            (TradingStrategy::FlashCrashDetector(t1), TradingStrategy::FlashCrashDetector(t2))
+                if t1 == t2 =>
+            {
                 true
             }
 
