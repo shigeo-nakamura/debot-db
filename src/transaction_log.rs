@@ -824,7 +824,10 @@ impl ModelParams {
             Path::new(&file_name).to_path_buf()
         };
 
-        let mut file = File::open(&file_path)?;
+        let mut file = File::open(&file_path).map_err(|e| {
+            log::error!("Failed to open file: {:?}: {}", file_path, e);
+            e
+        })?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
         let model: SerializableModel = bincode::deserialize(&buffer)?;
