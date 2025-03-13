@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use bson::to_document;
 use bson::Document;
 use debot_utils::HasId;
 use futures::stream::TryStreamExt;
@@ -107,18 +108,80 @@ pub async fn search_item<T: Entity>(
     }
 }
 
+async fn get_existing_indexes<T>(
+    collection: &Collection<T>,
+) -> Result<Vec<String>, Box<dyn error::Error>> {
+    let mut indexes = collection.list_indexes(None).await?;
+    let mut index_names = Vec::new();
+
+    while let Some(index) = indexes.try_next().await? {
+        let document: Document = to_document(&index)?;
+        if let Some(name) = document.get_str("name").ok() {
+            index_names.push(name.to_string());
+        }
+    }
+
+    Ok(index_names)
+}
 pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Error>> {
-    let item = PositionLog::default();
-    item.create_indexes(db).await?;
+    async fn create_index<T: Entity>(
+        db: &Database,
+        entity: &T,
+    ) -> Result<(), Box<dyn error::Error>> {
+        let collection = entity.get_collection(db);
+        let existing_indexes = get_existing_indexes(&collection).await?;
 
-    let item = AppState::default();
-    item.create_indexes(db).await?;
+        let indexes = vec![
+            (
+                "id_1",
+                IndexModel::builder()
+                    .keys(doc! {"id": 1})
+                    .options(IndexOptions::builder().unique(true).build())
+                    .build(),
+            ),
+            (
+                "open_timestamp_1",
+                IndexModel::builder()
+                    .keys(doc! {"open_timestamp": 1})
+                    .build(),
+            ),
+            (
+                "open_timestamp_-1",
+                IndexModel::builder()
+                    .keys(doc! {"open_timestamp": -1})
+                    .build(),
+            ),
+            (
+                "price_point.timestamp_1",
+                IndexModel::builder()
+                    .keys(doc! {"price_point.timestamp": 1})
+                    .build(),
+            ),
+            (
+                "price_point.timestamp_-1",
+                IndexModel::builder()
+                    .keys(doc! {"price_point.timestamp": -1})
+                    .build(),
+            ),
+        ];
 
-    let item = PriceLog::default();
-    item.create_indexes(db).await?;
+        for (index_name, index_model) in indexes {
+            if !existing_indexes.contains(&index_name.to_string()) {
+                log::info!("Creating index `{}`...", index_name);
+                collection.create_index(index_model, None).await?;
+                log::info!("Index `{}` has been created successfully!", index_name);
+            } else {
+                log::info!("Index `{}` already exists, skipping.", index_name);
+            }
+        }
 
-    let item = PnlLog::default();
-    item.create_indexes(db).await?;
+        Ok(())
+    }
+
+    create_index(db, &PositionLog::default()).await?;
+    create_index(db, &AppState::default()).await?;
+    create_index(db, &PriceLog::default()).await?;
+    create_index(db, &PnlLog::default()).await?;
 
     Ok(())
 }

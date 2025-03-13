@@ -1,6 +1,6 @@
 [package]
 name = "debot-db"
-version = "2.3.10"
+version = "2.3.11"
 authors = ["Shigeo NAKAMURA <nakamura_shigeo@yahoo.com>"]
 edition = "2021"
 description = "DB accesser"
