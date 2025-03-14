@@ -79,6 +79,7 @@ pub struct FundConfig {
     pub open_minutes: i64,
     pub flash_crash_atr_multiplier: Option<Decimal>,
     pub order_size_multiplier: Decimal,
+    pub flash_crash_min_percentage: Option<Decimal>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
