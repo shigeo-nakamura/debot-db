@@ -121,6 +121,7 @@ async fn get_existing_indexes<T>(
         }
     }
 
+    log::info!("Existing indexes: {:?}", index_names);
     Ok(index_names)
 }
 pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Error>> {

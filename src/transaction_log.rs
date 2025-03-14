@@ -340,28 +340,37 @@ impl TransactionLog {
         client_options.tls = Some(Tls::Enabled(tls_options));
         let client_holder = Arc::new(Mutex::new(ClientHolder::new(client_options)));
 
-        let db = shared_mongodb::database::get(&client_holder, &db_w_name)
+        // Get database instances for read and write
+        let db_w = shared_mongodb::database::get(&client_holder, &db_w_name)
+            .await
+            .unwrap();
+        let db_r = shared_mongodb::database::get(&client_holder, &db_r_name)
             .await
             .unwrap();
 
-        create_unique_index(&db)
+        // Ensure indexes exist in both read and write databases
+        create_unique_index(&db_w)
             .await
-            .expect("Error creating unique index");
+            .expect("Error creating unique index in db_w");
+        create_unique_index(&db_r)
+            .await
+            .expect("Error creating unique index in db_r");
 
         if back_test {
-            if let Err(e) = Self::delete_all_positions(&db).await {
+            if let Err(e) = Self::delete_all_positions(&db_w).await {
                 panic!("delete_all_positions failed: {:?}", e);
             }
-            if let Err(e) = Self::delete_app_state(&db).await {
+            if let Err(e) = Self::delete_app_state(&db_w).await {
                 panic!("delete_app_state failed: {:?}", e);
             }
         }
 
         let last_position_counter =
-            TransactionLog::get_last_transaction_id(&db, CounterType::Position).await;
+            TransactionLog::get_last_transaction_id(&db_w, CounterType::Position).await;
         let last_price_counter =
-            TransactionLog::get_last_transaction_id(&db, CounterType::Price).await;
-        let last_pnl_counter = TransactionLog::get_last_transaction_id(&db, CounterType::Pnl).await;
+            TransactionLog::get_last_transaction_id(&db_w, CounterType::Price).await;
+        let last_pnl_counter =
+            TransactionLog::get_last_transaction_id(&db_w, CounterType::Pnl).await;
 
         let counter = Counter::new(
             max_position_counter,
