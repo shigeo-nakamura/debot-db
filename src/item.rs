@@ -108,6 +108,11 @@ pub async fn search_item<T: Entity>(
     }
 }
 
+async fn ensure_collection_exists(collection: &Collection<Document>) {
+    let doc = doc! { "_id": bson::oid::ObjectId::new() };
+    let _ = collection.insert_one(doc, None).await.ok();
+}
+
 async fn get_existing_indexes<T>(
     collection: &Collection<T>,
 ) -> Result<Vec<String>, Box<dyn error::Error>> {
@@ -129,7 +134,9 @@ pub async fn create_unique_index(db: &Database) -> Result<(), Box<dyn error::Err
         db: &Database,
         entity: &T,
     ) -> Result<(), Box<dyn error::Error>> {
-        let collection = entity.get_collection(db);
+        let collection: Collection<Document> =
+            db.collection::<Document>(entity.get_collection_name());
+        ensure_collection_exists(&collection).await;
         let existing_indexes = get_existing_indexes(&collection).await?;
 
         let indexes = vec![
