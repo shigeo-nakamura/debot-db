@@ -10,16 +10,16 @@ pub enum TrendType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
     MeanReversion(TrendType),
-    RandomFlashCrashDetector(TrendType),
-    FlashCrashDetector(TrendType),
+    UntrainedMeanReversion(TrendType),
+    GridTrade(TrendType),
 }
 
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::MeanReversion(t)
-            | TradingStrategy::RandomFlashCrashDetector(t)
-            | TradingStrategy::FlashCrashDetector(t) => t,
+            TradingStrategy::UntrainedMeanReversion(t)
+            | TradingStrategy::MeanReversion(t)
+            | TradingStrategy::GridTrade(t) => t,
         }
     }
 }
@@ -50,47 +50,43 @@ impl PartialEq for TradingStrategy {
             }
 
             (
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Up),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Up),
             )
             | (
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Up),
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Up),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
             )
             | (
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Down),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Down),
             )
             | (
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Down),
-                TradingStrategy::RandomFlashCrashDetector(TrendType::Any),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Down),
+                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
             ) => true,
             (
-                TradingStrategy::RandomFlashCrashDetector(t1),
-                TradingStrategy::RandomFlashCrashDetector(t2),
+                TradingStrategy::UntrainedMeanReversion(t1),
+                TradingStrategy::UntrainedMeanReversion(t2),
             ) if t1 == t2 => true,
 
             (
-                TradingStrategy::FlashCrashDetector(TrendType::Any),
-                TradingStrategy::FlashCrashDetector(TrendType::Up),
+                TradingStrategy::GridTrade(TrendType::Any),
+                TradingStrategy::GridTrade(TrendType::Up),
             )
             | (
-                TradingStrategy::FlashCrashDetector(TrendType::Up),
-                TradingStrategy::FlashCrashDetector(TrendType::Any),
+                TradingStrategy::GridTrade(TrendType::Up),
+                TradingStrategy::GridTrade(TrendType::Any),
             )
             | (
-                TradingStrategy::FlashCrashDetector(TrendType::Any),
-                TradingStrategy::FlashCrashDetector(TrendType::Down),
+                TradingStrategy::GridTrade(TrendType::Any),
+                TradingStrategy::GridTrade(TrendType::Down),
             )
             | (
-                TradingStrategy::FlashCrashDetector(TrendType::Down),
-                TradingStrategy::FlashCrashDetector(TrendType::Any),
+                TradingStrategy::GridTrade(TrendType::Down),
+                TradingStrategy::GridTrade(TrendType::Any),
             ) => true,
-            (TradingStrategy::FlashCrashDetector(t1), TradingStrategy::FlashCrashDetector(t2))
-                if t1 == t2 =>
-            {
-                true
-            }
+            (TradingStrategy::GridTrade(t1), TradingStrategy::GridTrade(t2)) if t1 == t2 => true,
 
             _ => false,
         }
