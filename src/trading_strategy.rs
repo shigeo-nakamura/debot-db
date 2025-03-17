@@ -13,6 +13,7 @@ pub enum TradingStrategy {
     RandomMeanReversion(TrendType),
     Grid(TrendType),
     Inago(TrendType),
+    RandomInago(TrendType),
 }
 
 impl TradingStrategy {
@@ -21,6 +22,7 @@ impl TradingStrategy {
             TradingStrategy::RandomMeanReversion(t)
             | TradingStrategy::MeanReversion(t)
             | TradingStrategy::Grid(t)
+            | TradingStrategy::RandomInago(t)
             | TradingStrategy::Inago(t) => t,
         }
     }
@@ -87,6 +89,26 @@ impl PartialEq for TradingStrategy {
                 true
             }
             (TradingStrategy::Inago(t1), TradingStrategy::Inago(t2)) if t1 == t2 => true,
+
+            (
+                TradingStrategy::RandomInago(TrendType::Any),
+                TradingStrategy::RandomInago(TrendType::Up),
+            )
+            | (
+                TradingStrategy::RandomInago(TrendType::Up),
+                TradingStrategy::RandomInago(TrendType::Any),
+            )
+            | (
+                TradingStrategy::RandomInago(TrendType::Any),
+                TradingStrategy::RandomInago(TrendType::Down),
+            )
+            | (
+                TradingStrategy::RandomInago(TrendType::Down),
+                TradingStrategy::RandomInago(TrendType::Any),
+            ) => true,
+            (TradingStrategy::RandomInago(t1), TradingStrategy::RandomInago(t2)) if t1 == t2 => {
+                true
+            }
 
             _ => false,
         }
