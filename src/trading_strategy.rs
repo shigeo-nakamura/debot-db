@@ -9,7 +9,6 @@ pub enum TrendType {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
-    RandomWalk(TrendType),
     MeanReversion(TrendType),
     RandomFlashCrashDetector(TrendType),
     FlashCrashDetector(TrendType),
@@ -18,8 +17,7 @@ pub enum TradingStrategy {
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::RandomWalk(t)
-            | TradingStrategy::MeanReversion(t)
+            TradingStrategy::MeanReversion(t)
             | TradingStrategy::RandomFlashCrashDetector(t)
             | TradingStrategy::FlashCrashDetector(t) => t,
         }
@@ -29,24 +27,6 @@ impl TradingStrategy {
 impl PartialEq for TradingStrategy {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (
-                TradingStrategy::RandomWalk(TrendType::Any),
-                TradingStrategy::RandomWalk(TrendType::Up),
-            )
-            | (
-                TradingStrategy::RandomWalk(TrendType::Up),
-                TradingStrategy::RandomWalk(TrendType::Any),
-            )
-            | (
-                TradingStrategy::RandomWalk(TrendType::Any),
-                TradingStrategy::RandomWalk(TrendType::Down),
-            )
-            | (
-                TradingStrategy::RandomWalk(TrendType::Down),
-                TradingStrategy::RandomWalk(TrendType::Any),
-            ) => true,
-            (TradingStrategy::RandomWalk(t1), TradingStrategy::RandomWalk(t2)) if t1 == t2 => true,
-
             (
                 TradingStrategy::MeanReversion(TrendType::Any),
                 TradingStrategy::MeanReversion(TrendType::Up),
