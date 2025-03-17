@@ -144,7 +144,7 @@ pub struct PricePoint {
     pub funding_rate: Option<Decimal>,
     pub open_interest: Option<Decimal>,
     pub oracle_price: Option<Decimal>,
-    pub is_in_range: Option<bool>,
+    pub debug: DebugLog,
 }
 
 impl PricePoint {
@@ -156,7 +156,7 @@ impl PricePoint {
         funding_rate: Option<Decimal>,
         open_interest: Option<Decimal>,
         oracle_price: Option<Decimal>,
-        is_in_range: Option<bool>,
+        debug: DebugLog,
     ) -> Self {
         let (local_timestamp, timestamp_str) = get_local_time();
         let timestamp = timestamp.unwrap_or(local_timestamp);
@@ -169,7 +169,7 @@ impl PricePoint {
             funding_rate,
             open_interest,
             oracle_price,
-            is_in_range,
+            debug,
         }
     }
 }
