@@ -10,16 +10,18 @@ pub enum TrendType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
     MeanReversion(TrendType),
-    UntrainedMeanReversion(TrendType),
-    GridTrade(TrendType),
+    RandomMeanReversion(TrendType),
+    Grid(TrendType),
+    Inago(TrendType),
 }
 
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::UntrainedMeanReversion(t)
+            TradingStrategy::RandomMeanReversion(t)
             | TradingStrategy::MeanReversion(t)
-            | TradingStrategy::GridTrade(t) => t,
+            | TradingStrategy::Grid(t)
+            | TradingStrategy::Inago(t) => t,
         }
     }
 }
@@ -50,43 +52,41 @@ impl PartialEq for TradingStrategy {
             }
 
             (
-                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
-                TradingStrategy::UntrainedMeanReversion(TrendType::Up),
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
+                TradingStrategy::RandomMeanReversion(TrendType::Up),
             )
             | (
-                TradingStrategy::UntrainedMeanReversion(TrendType::Up),
-                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
+                TradingStrategy::RandomMeanReversion(TrendType::Up),
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
             )
             | (
-                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
-                TradingStrategy::UntrainedMeanReversion(TrendType::Down),
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
+                TradingStrategy::RandomMeanReversion(TrendType::Down),
             )
             | (
-                TradingStrategy::UntrainedMeanReversion(TrendType::Down),
-                TradingStrategy::UntrainedMeanReversion(TrendType::Any),
+                TradingStrategy::RandomMeanReversion(TrendType::Down),
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
             ) => true,
             (
-                TradingStrategy::UntrainedMeanReversion(t1),
-                TradingStrategy::UntrainedMeanReversion(t2),
+                TradingStrategy::RandomMeanReversion(t1),
+                TradingStrategy::RandomMeanReversion(t2),
             ) if t1 == t2 => true,
 
-            (
-                TradingStrategy::GridTrade(TrendType::Any),
-                TradingStrategy::GridTrade(TrendType::Up),
-            )
-            | (
-                TradingStrategy::GridTrade(TrendType::Up),
-                TradingStrategy::GridTrade(TrendType::Any),
-            )
-            | (
-                TradingStrategy::GridTrade(TrendType::Any),
-                TradingStrategy::GridTrade(TrendType::Down),
-            )
-            | (
-                TradingStrategy::GridTrade(TrendType::Down),
-                TradingStrategy::GridTrade(TrendType::Any),
-            ) => true,
-            (TradingStrategy::GridTrade(t1), TradingStrategy::GridTrade(t2)) if t1 == t2 => true,
+            (TradingStrategy::Grid(TrendType::Any), TradingStrategy::Grid(TrendType::Up))
+            | (TradingStrategy::Grid(TrendType::Up), TradingStrategy::Grid(TrendType::Any))
+            | (TradingStrategy::Grid(TrendType::Any), TradingStrategy::Grid(TrendType::Down))
+            | (TradingStrategy::Grid(TrendType::Down), TradingStrategy::Grid(TrendType::Any)) => {
+                true
+            }
+            (TradingStrategy::Grid(t1), TradingStrategy::Grid(t2)) if t1 == t2 => true,
+
+            (TradingStrategy::Inago(TrendType::Any), TradingStrategy::Inago(TrendType::Up))
+            | (TradingStrategy::Inago(TrendType::Up), TradingStrategy::Inago(TrendType::Any))
+            | (TradingStrategy::Inago(TrendType::Any), TradingStrategy::Inago(TrendType::Down))
+            | (TradingStrategy::Inago(TrendType::Down), TradingStrategy::Inago(TrendType::Any)) => {
+                true
+            }
+            (TradingStrategy::Inago(t1), TradingStrategy::Inago(t2)) if t1 == t2 => true,
 
             _ => false,
         }
