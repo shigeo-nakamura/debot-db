@@ -10,13 +10,18 @@ pub enum TrendType {
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
     Inago(TrendType),
+    InagoReversion(TrendType),
     RandomInago(TrendType),
+    RandomInagoReversion(TrendType),
 }
 
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::RandomInago(t) | TradingStrategy::Inago(t) => t,
+            TradingStrategy::RandomInago(t)
+            | TradingStrategy::InagoReversion(t)
+            | TradingStrategy::RandomInagoReversion(t)
+            | TradingStrategy::Inago(t) => t,
         }
     }
 }
@@ -30,6 +35,24 @@ impl PartialEq for TradingStrategy {
             | (TradingStrategy::Inago(TrendType::Down), TradingStrategy::Inago(TrendType::Any)) => {
                 true
             }
+            (TradingStrategy::Inago(t1), TradingStrategy::Inago(t2)) if t1 == t2 => true,
+
+            (
+                TradingStrategy::InagoReversion(TrendType::Any),
+                TradingStrategy::InagoReversion(TrendType::Up),
+            )
+            | (
+                TradingStrategy::InagoReversion(TrendType::Up),
+                TradingStrategy::InagoReversion(TrendType::Any),
+            )
+            | (
+                TradingStrategy::InagoReversion(TrendType::Any),
+                TradingStrategy::InagoReversion(TrendType::Down),
+            )
+            | (
+                TradingStrategy::InagoReversion(TrendType::Down),
+                TradingStrategy::InagoReversion(TrendType::Any),
+            ) => true,
             (TradingStrategy::Inago(t1), TradingStrategy::Inago(t2)) if t1 == t2 => true,
 
             (
@@ -51,6 +74,27 @@ impl PartialEq for TradingStrategy {
             (TradingStrategy::RandomInago(t1), TradingStrategy::RandomInago(t2)) if t1 == t2 => {
                 true
             }
+
+            (
+                TradingStrategy::RandomInagoReversion(TrendType::Any),
+                TradingStrategy::RandomInagoReversion(TrendType::Up),
+            )
+            | (
+                TradingStrategy::RandomInagoReversion(TrendType::Up),
+                TradingStrategy::RandomInagoReversion(TrendType::Any),
+            )
+            | (
+                TradingStrategy::RandomInagoReversion(TrendType::Any),
+                TradingStrategy::RandomInagoReversion(TrendType::Down),
+            )
+            | (
+                TradingStrategy::RandomInagoReversion(TrendType::Down),
+                TradingStrategy::RandomInagoReversion(TrendType::Any),
+            ) => true,
+            (
+                TradingStrategy::RandomInagoReversion(t1),
+                TradingStrategy::RandomInagoReversion(t2),
+            ) if t1 == t2 => true,
 
             _ => false,
         }
