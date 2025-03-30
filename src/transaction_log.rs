@@ -81,6 +81,8 @@ pub struct FundConfig {
     pub order_size_multiplier: Decimal,
     pub flash_crash_min_percentage: Option<Decimal>,
     pub breakout_atr_multiplier: Decimal,
+    pub rsi_threshold: Decimal,
+    pub price_loopback: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
