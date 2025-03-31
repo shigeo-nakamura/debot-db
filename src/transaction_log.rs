@@ -83,6 +83,7 @@ pub struct FundConfig {
     pub breakout_atr_multiplier: Decimal,
     pub rsi_threshold: Decimal,
     pub price_loopback: usize,
+    pub grid_entry_spread: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
