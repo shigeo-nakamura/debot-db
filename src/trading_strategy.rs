@@ -13,7 +13,7 @@ pub enum TradingStrategy {
     InagoReversion(TrendType),
     RandomInago(TrendType),
     RandomInagoReversion(TrendType),
-    RandomTrendFollow(TrendType),
+    RandomGridEntry(TrendType),
 }
 
 impl TradingStrategy {
@@ -23,7 +23,7 @@ impl TradingStrategy {
             | TradingStrategy::InagoReversion(t)
             | TradingStrategy::RandomInagoReversion(t)
             | TradingStrategy::Inago(t)
-            | TradingStrategy::RandomTrendFollow(t) => t,
+            | TradingStrategy::RandomGridEntry(t) => t,
         }
     }
 }
@@ -99,22 +99,22 @@ impl PartialEq for TradingStrategy {
             ) if t1 == t2 => true,
 
             (
-                TradingStrategy::RandomTrendFollow(TrendType::Any),
-                TradingStrategy::RandomTrendFollow(TrendType::Up),
+                TradingStrategy::RandomGridEntry(TrendType::Any),
+                TradingStrategy::RandomGridEntry(TrendType::Up),
             )
             | (
-                TradingStrategy::RandomTrendFollow(TrendType::Up),
-                TradingStrategy::RandomTrendFollow(TrendType::Any),
+                TradingStrategy::RandomGridEntry(TrendType::Up),
+                TradingStrategy::RandomGridEntry(TrendType::Any),
             )
             | (
-                TradingStrategy::RandomTrendFollow(TrendType::Any),
-                TradingStrategy::RandomTrendFollow(TrendType::Down),
+                TradingStrategy::RandomGridEntry(TrendType::Any),
+                TradingStrategy::RandomGridEntry(TrendType::Down),
             )
             | (
-                TradingStrategy::RandomTrendFollow(TrendType::Down),
-                TradingStrategy::RandomTrendFollow(TrendType::Any),
+                TradingStrategy::RandomGridEntry(TrendType::Down),
+                TradingStrategy::RandomGridEntry(TrendType::Any),
             ) => true,
-            (TradingStrategy::RandomTrendFollow(t1), TradingStrategy::RandomTrendFollow(t2))
+            (TradingStrategy::RandomGridEntry(t1), TradingStrategy::RandomGridEntry(t2))
                 if t1 == t2 =>
             {
                 true
