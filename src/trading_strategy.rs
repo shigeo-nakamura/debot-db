@@ -55,7 +55,11 @@ impl PartialEq for TradingStrategy {
                 TradingStrategy::InagoReversion(TrendType::Down),
                 TradingStrategy::InagoReversion(TrendType::Any),
             ) => true,
-            (TradingStrategy::Inago(t1), TradingStrategy::Inago(t2)) if t1 == t2 => true,
+            (TradingStrategy::InagoReversion(t1), TradingStrategy::InagoReversion(t2))
+                if t1 == t2 =>
+            {
+                true
+            }
 
             (
                 TradingStrategy::RandomInago(TrendType::Any),
