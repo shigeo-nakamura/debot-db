@@ -16,6 +16,7 @@ pub enum TradingStrategy {
     RandomInago(TrendType),
     RandomInagoReversion(TrendType),
     RandomGridEntry(TrendType),
+    RandomFlashCrash,
 }
 
 impl TradingStrategy {
@@ -27,7 +28,7 @@ impl TradingStrategy {
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomInagoReversion(t)
             | TradingStrategy::RandomGridEntry(t) => t,
-            TradingStrategy::FlashCrash => &TrendType::Up,
+            TradingStrategy::RandomFlashCrash | TradingStrategy::FlashCrash => &TrendType::Up,
         }
     }
 }
@@ -97,6 +98,9 @@ impl PartialEq for TradingStrategy {
             {
                 true
             }
+
+            // RandomFlashCrash
+            (TradingStrategy::RandomFlashCrash, TradingStrategy::RandomFlashCrash) => true,
 
             // FlashCrash
             (TradingStrategy::FlashCrash, TradingStrategy::FlashCrash) => true,
