@@ -12,10 +12,12 @@ pub enum TradingStrategy {
     Inago(TrendType),
     InagoReversion(TrendType),
     GridEntry(TrendType),
+    MeanReversion(TrendType),
     FlashCrash,
     RandomInago(TrendType),
     RandomInagoReversion(TrendType),
     RandomGridEntry(TrendType),
+    RandomMeanReversion(TrendType),
     RandomFlashCrash,
 }
 
@@ -25,9 +27,11 @@ impl TradingStrategy {
             TradingStrategy::Inago(t)
             | TradingStrategy::InagoReversion(t)
             | TradingStrategy::GridEntry(t)
+            | TradingStrategy::MeanReversion(t)
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomInagoReversion(t)
             | TradingStrategy::RandomGridEntry(t) => t,
+            TradingStrategy::RandomMeanReversion(t) => t,
             TradingStrategy::RandomFlashCrash | TradingStrategy::FlashCrash => &TrendType::Up,
         }
     }
@@ -60,6 +64,17 @@ impl PartialEq for TradingStrategy {
             (TradingStrategy::GridEntry(TrendType::Any), TradingStrategy::GridEntry(_))
             | (TradingStrategy::GridEntry(_), TradingStrategy::GridEntry(TrendType::Any)) => true,
             (TradingStrategy::GridEntry(t1), TradingStrategy::GridEntry(t2)) if t1 == t2 => true,
+
+            // MeanReversion
+            (TradingStrategy::MeanReversion(TrendType::Any), TradingStrategy::MeanReversion(_))
+            | (TradingStrategy::MeanReversion(_), TradingStrategy::MeanReversion(TrendType::Any)) => {
+                true
+            }
+            (TradingStrategy::MeanReversion(t1), TradingStrategy::MeanReversion(t2))
+                if t1 == t2 =>
+            {
+                true
+            }
 
             // RandomInago
             (TradingStrategy::RandomInago(TrendType::Any), TradingStrategy::RandomInago(_))
@@ -98,6 +113,20 @@ impl PartialEq for TradingStrategy {
             {
                 true
             }
+
+            // RandomMeanReversion
+            (
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
+                TradingStrategy::RandomMeanReversion(_),
+            )
+            | (
+                TradingStrategy::RandomMeanReversion(_),
+                TradingStrategy::RandomMeanReversion(TrendType::Any),
+            ) => true,
+            (
+                TradingStrategy::RandomMeanReversion(t1),
+                TradingStrategy::RandomMeanReversion(t2),
+            ) if t1 == t2 => true,
 
             // RandomFlashCrash
             (TradingStrategy::RandomFlashCrash, TradingStrategy::RandomFlashCrash) => true,
