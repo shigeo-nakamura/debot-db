@@ -79,8 +79,6 @@ pub struct FundConfig {
     pub open_minutes: i64,
     pub order_size_multiplier: Decimal,
     pub breakout_atr_multiplier: Decimal,
-    pub rsi_threshold: Decimal,
-    pub price_loopback: usize,
     pub grid_entry_spread: i64,
 }
 
