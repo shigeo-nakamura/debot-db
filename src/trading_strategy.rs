@@ -15,6 +15,7 @@ pub enum TradingStrategy {
     RandomGridEntry(TrendType),
     RandomInago(TrendType),
     RandomMeanReversion(TrendType),
+    Hybrid,
 }
 
 impl TradingStrategy {
@@ -26,6 +27,7 @@ impl TradingStrategy {
             | TradingStrategy::RandomGridEntry(t)
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomMeanReversion(t) => t,
+            TradingStrategy::Hybrid => &TrendType::Any,
         }
     }
 }
@@ -33,6 +35,18 @@ impl TradingStrategy {
 impl PartialEq for TradingStrategy {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
+                        // Hybrid matches specific trends of Inago and MeanReversion
+                        (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Up))
+                        | (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Down))
+                        | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Up))
+                        | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Down))
+                        | (TradingStrategy::Inago(TrendType::Up), TradingStrategy::Hybrid)
+                        | (TradingStrategy::Inago(TrendType::Down), TradingStrategy::Hybrid)
+                        | (TradingStrategy::MeanReversion(TrendType::Up), TradingStrategy::Hybrid)
+                        | (TradingStrategy::MeanReversion(TrendType::Down), TradingStrategy::Hybrid)
+                        // Hybrid equals itself
+                        | (TradingStrategy::Hybrid, TradingStrategy::Hybrid) => true,
+
             // GridEntry
             (TradingStrategy::GridEntry(TrendType::Any), TradingStrategy::GridEntry(_))
             | (TradingStrategy::GridEntry(_), TradingStrategy::GridEntry(TrendType::Any)) => true,
