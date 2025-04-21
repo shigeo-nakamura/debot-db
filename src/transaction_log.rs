@@ -78,7 +78,7 @@ pub struct FundConfig {
     pub atr_term: SampleTerm,
     pub open_minutes: i64,
     pub order_size_multiplier: Decimal,
-    pub grid_entry_spread: i64,
+    pub tick_spread: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
