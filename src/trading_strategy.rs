@@ -16,6 +16,7 @@ pub enum TradingStrategy {
     RandomInago(TrendType),
     RandomMeanReversion(TrendType),
     Hybrid,
+    Rebalance,
 }
 
 impl TradingStrategy {
@@ -27,7 +28,7 @@ impl TradingStrategy {
             | TradingStrategy::RandomGridEntry(t)
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomMeanReversion(t) => t,
-            TradingStrategy::Hybrid => &TrendType::Any,
+            TradingStrategy::Hybrid | TradingStrategy::Rebalance => &TrendType::Any,
         }
     }
 }
@@ -35,17 +36,19 @@ impl TradingStrategy {
 impl PartialEq for TradingStrategy {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-                        // Hybrid matches specific trends of Inago and MeanReversion
-                        (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Up))
-                        | (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Down))
-                        | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Up))
-                        | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Down))
-                        | (TradingStrategy::Inago(TrendType::Up), TradingStrategy::Hybrid)
-                        | (TradingStrategy::Inago(TrendType::Down), TradingStrategy::Hybrid)
-                        | (TradingStrategy::MeanReversion(TrendType::Up), TradingStrategy::Hybrid)
-                        | (TradingStrategy::MeanReversion(TrendType::Down), TradingStrategy::Hybrid)
-                        // Hybrid equals itself
-                        | (TradingStrategy::Hybrid, TradingStrategy::Hybrid) => true,
+            // Hybrid matches specific trends of Inago and MeanReversion
+            (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Up))
+            | (TradingStrategy::Hybrid, TradingStrategy::Inago(TrendType::Down))
+            | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Up))
+            | (TradingStrategy::Hybrid, TradingStrategy::MeanReversion(TrendType::Down))
+            | (TradingStrategy::Inago(TrendType::Up), TradingStrategy::Hybrid)
+            | (TradingStrategy::Inago(TrendType::Down), TradingStrategy::Hybrid)
+            | (TradingStrategy::MeanReversion(TrendType::Up), TradingStrategy::Hybrid)
+            | (TradingStrategy::MeanReversion(TrendType::Down), TradingStrategy::Hybrid)
+            | (TradingStrategy::Hybrid, TradingStrategy::Hybrid) => true,
+
+            // Rebalance equals itself only
+            (TradingStrategy::Rebalance, TradingStrategy::Rebalance) => true,
 
             // GridEntry
             (TradingStrategy::GridEntry(TrendType::Any), TradingStrategy::GridEntry(_))
