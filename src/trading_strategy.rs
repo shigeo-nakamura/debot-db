@@ -9,10 +9,9 @@ pub enum TrendType {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
-    GridEntry(TrendType),
+    GridEntry,
     Inago(TrendType),
     MeanReversion(TrendType),
-    RandomGridEntry(TrendType),
     RandomInago(TrendType),
     RandomMeanReversion(TrendType),
     Hybrid,
@@ -22,13 +21,13 @@ pub enum TradingStrategy {
 impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
-            TradingStrategy::GridEntry(t)
-            | TradingStrategy::Inago(t)
+            TradingStrategy::Inago(t)
             | TradingStrategy::MeanReversion(t)
-            | TradingStrategy::RandomGridEntry(t)
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomMeanReversion(t) => t,
-            TradingStrategy::Hybrid | TradingStrategy::Rebalance => &TrendType::Any,
+            TradingStrategy::Hybrid | TradingStrategy::Rebalance | TradingStrategy::GridEntry => {
+                &TrendType::Any
+            }
         }
     }
 }
@@ -51,9 +50,7 @@ impl PartialEq for TradingStrategy {
             (TradingStrategy::Rebalance, TradingStrategy::Rebalance) => true,
 
             // GridEntry
-            (TradingStrategy::GridEntry(TrendType::Any), TradingStrategy::GridEntry(_))
-            | (TradingStrategy::GridEntry(_), TradingStrategy::GridEntry(TrendType::Any)) => true,
-            (TradingStrategy::GridEntry(t1), TradingStrategy::GridEntry(t2)) if t1 == t2 => true,
+            (TradingStrategy::GridEntry, TradingStrategy::GridEntry) => true,
 
             // Inago
             (TradingStrategy::Inago(TrendType::Any), TradingStrategy::Inago(_))
@@ -66,21 +63,6 @@ impl PartialEq for TradingStrategy {
                 true
             }
             (TradingStrategy::MeanReversion(t1), TradingStrategy::MeanReversion(t2))
-                if t1 == t2 =>
-            {
-                true
-            }
-
-            // RandomGridEntry
-            (
-                TradingStrategy::RandomGridEntry(TrendType::Any),
-                TradingStrategy::RandomGridEntry(_),
-            )
-            | (
-                TradingStrategy::RandomGridEntry(_),
-                TradingStrategy::RandomGridEntry(TrendType::Any),
-            ) => true,
-            (TradingStrategy::RandomGridEntry(t1), TradingStrategy::RandomGridEntry(t2))
                 if t1 == t2 =>
             {
                 true
