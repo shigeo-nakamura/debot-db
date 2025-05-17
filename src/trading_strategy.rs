@@ -9,7 +9,7 @@ pub enum TrendType {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
-    GridEntry,
+    MarketMake,
     Inago(TrendType),
     MeanReversion(TrendType),
     RandomInago(TrendType),
@@ -25,7 +25,7 @@ impl TradingStrategy {
             | TradingStrategy::MeanReversion(t)
             | TradingStrategy::RandomInago(t)
             | TradingStrategy::RandomMeanReversion(t) => t,
-            TradingStrategy::Hybrid | TradingStrategy::Rebalance | TradingStrategy::GridEntry => {
+            TradingStrategy::Hybrid | TradingStrategy::Rebalance | TradingStrategy::MarketMake => {
                 &TrendType::Any
             }
         }
@@ -49,8 +49,8 @@ impl PartialEq for TradingStrategy {
             // Rebalance equals itself only
             (TradingStrategy::Rebalance, TradingStrategy::Rebalance) => true,
 
-            // GridEntry
-            (TradingStrategy::GridEntry, TradingStrategy::GridEntry) => true,
+            // MarketMake
+            (TradingStrategy::MarketMake, TradingStrategy::MarketMake) => true,
 
             // Inago
             (TradingStrategy::Inago(TrendType::Any), TradingStrategy::Inago(_))
