@@ -76,7 +76,8 @@ pub struct FundConfig {
     pub take_profit_ratio: Option<Decimal>,
     pub atr_spread: Decimal,
     pub atr_term: SampleTerm,
-    pub open_minutes: i64,
+    pub entry_timeout_sec: i64,
+    pub max_holding_sec: i64,
     pub order_size_multiplier: Decimal,
     pub tick_spread: i64,
 }
