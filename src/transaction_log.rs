@@ -80,6 +80,7 @@ pub struct FundConfig {
     pub max_holding_sec: i64,
     pub order_size_multiplier: Decimal,
     pub tick_spread: i64,
+    pub bias_ticks: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
