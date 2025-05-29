@@ -9,12 +9,12 @@ pub enum TrendType {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Serialize, Deserialize)]
 pub enum TradingStrategy {
-    MarketMake(TrendType),
+    MarketMake,
     Inago(TrendType),
     MeanReversion(TrendType),
+    RandomMarketMake,
     RandomInago(TrendType),
     RandomMeanReversion(TrendType),
-    RandomMarketMake(TrendType),
     Hybrid,
     Rebalance,
 }
@@ -23,12 +23,13 @@ impl TradingStrategy {
     pub fn trend_type(&self) -> &TrendType {
         match self {
             TradingStrategy::Inago(t)
-            | TradingStrategy::MarketMake(t)
             | TradingStrategy::MeanReversion(t)
             | TradingStrategy::RandomInago(t)
-            | TradingStrategy::RandomMarketMake(t)
             | TradingStrategy::RandomMeanReversion(t) => t,
-            TradingStrategy::Hybrid | TradingStrategy::Rebalance => &TrendType::Any,
+            TradingStrategy::Hybrid
+            | TradingStrategy::Rebalance
+            | TradingStrategy::MarketMake
+            | TradingStrategy::RandomMarketMake => &TrendType::Any,
         }
     }
 }
@@ -51,9 +52,7 @@ impl PartialEq for TradingStrategy {
             (TradingStrategy::Rebalance, TradingStrategy::Rebalance) => true,
 
             // MarketMake
-            (TradingStrategy::MarketMake(TrendType::Any), TradingStrategy::MarketMake(_))
-            | (TradingStrategy::MarketMake(_), TradingStrategy::MarketMake(TrendType::Any)) => true,
-            (TradingStrategy::MarketMake(t1), TradingStrategy::MarketMake(t2)) if t1 == t2 => true,
+            (TradingStrategy::MarketMake, TradingStrategy::MarketMake) => true,
 
             // Inago
             (TradingStrategy::Inago(TrendType::Any), TradingStrategy::Inago(_))
@@ -72,19 +71,7 @@ impl PartialEq for TradingStrategy {
             }
 
             // RandomMarketMake
-            (
-                TradingStrategy::RandomMarketMake(TrendType::Any),
-                TradingStrategy::RandomMarketMake(_),
-            )
-            | (
-                TradingStrategy::RandomMarketMake(_),
-                TradingStrategy::RandomMarketMake(TrendType::Any),
-            ) => true,
-            (TradingStrategy::RandomMarketMake(t1), TradingStrategy::RandomMarketMake(t2))
-                if t1 == t2 =>
-            {
-                true
-            }
+            (TradingStrategy::RandomMarketMake, TradingStrategy::RandomMarketMake) => true,
 
             // RandomInago
             (TradingStrategy::RandomInago(TrendType::Any), TradingStrategy::RandomInago(_))
