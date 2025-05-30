@@ -20,6 +20,10 @@ pub enum TradingStrategy {
 }
 
 impl TradingStrategy {
+    pub fn is_market_make(&self) -> bool  {
+        matches!(self, TradingStrategy::MarketMake | TradingStrategy::RandomMarketMake)
+    }
+
     pub fn trend_type(&self) -> &TrendType {
         match self {
             TradingStrategy::Inago(t)
